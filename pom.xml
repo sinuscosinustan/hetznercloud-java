@@ -6,7 +6,7 @@
 
     <groupId>io.github.sinuscosinustan</groupId>
     <artifactId>hetznercloud-api</artifactId>
-    <version>3.2.7</version>
+    <version>4.0.0</version>
 
     <name>HetznerCloud-API</name>
     <description>Java-client for the Hetzner Cloud</description>
@@ -184,7 +184,6 @@
                     <localCheckout>true</localCheckout>
                     <pushChanges>false</pushChanges>
                     <mavenExecutorId>forked-path</mavenExecutorId>
-                    <arguments>-Dgpg.passphrase=${gpg.passphrase}</arguments>
                 </configuration>
                 <dependencies>
                     <dependency>
@@ -209,12 +208,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <version>3.1.0</version>
-                <configuration>
-                    <gpgArguments>
-                        <arg>--pinentry-mode</arg>
-                        <arg>loopback</arg>
-                    </gpgArguments>
-                </configuration>
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>

@@ -1,8 +1,8 @@
-# For next release
+# Major Release v4.0.0 (2025-02-10)
   * **Tan Siewert**
     * Change namespace to io.github.sinuscosinustan
 
-*Not released yet*
+*Released by Tan Siewert <tan@siewert.io>*
 
 # Patch Release v3.2.7 (2024-11-02)
   * **n0ise9914**
