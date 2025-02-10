@@ -1,12 +1,12 @@
 Hetzner Cloud API for Java
 ==========================
 
-![Test Action Status](https://github.com/TomSDEVSN/hetznercloud-java/actions/workflows/test.yml/badge.svg)
-![Build Action Status](https://github.com/TomSDEVSN/hetznercloud-java/actions/workflows/build.yml/badge.svg)
+![Test Action Status](https://github.com/sinuscosinustan/hetznercloud-java/actions/workflows/test.yml/badge.svg)
+![Build Action Status](https://github.com/sinuscosinustan/hetznercloud-java/actions/workflows/build.yml/badge.svg)
 
 Simple Java client for the Hetzner Cloud API.
 
-**Important message about this project [here](https://github.com/TomSDEVSN/hetznercloud-java/discussions/45)**
+**Important message about this project [here](https://github.com/sinuscosinustan/hetznercloud-java/discussions/45)**
 
 ## Compile
 
@@ -23,7 +23,7 @@ Dependency:
 ```xml
 <dependencies>
     <dependency>
-        <groupId>me.tomsdevsn</groupId>
+        <groupId>io.github.sinuscosinustan</groupId>
         <artifactId>hetznercloud-api</artifactId>
         <version>3.2.7</version>
     </dependency>
@@ -40,7 +40,7 @@ repositories {
 }
 
 dependencies {
-    implementation "me.tomsdevsn:hetznercloud-api:3.2.7"
+    implementation "io.github.sinuscosinustan:hetznercloud-api:3.2.7"
 }
 ```
 
@@ -49,7 +49,7 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation("me.tomsdevsn:hetznercloud-api:3.2.7")
+    implementation("io.github.sinuscosinustan:hetznercloud-api:3.2.7")
 }
 ```
 </details>
@@ -65,7 +65,7 @@ HCLOUD_TOKEN="${api_key}" mvn test
 
 ## JavaDocs
 
-The JavaDocs are available [here](https://tomsiewert.github.io/hetznercloud-java/)
+The JavaDocs are available [here](https://sinuscosinustan.github.io/hetznercloud-java/)
 
 ## Dependencies
 

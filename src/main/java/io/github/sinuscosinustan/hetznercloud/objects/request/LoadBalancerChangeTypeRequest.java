@@ -1,0 +1,15 @@
+package io.github.sinuscosinustan.hetznercloud.objects.request;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
+@AllArgsConstructor
+public class LoadBalancerChangeTypeRequest {
+
+    @JsonProperty("load_balancer_type")
+    private String loadBalancerType;
+  }

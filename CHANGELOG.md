@@ -1,3 +1,9 @@
+# For next release
+  * **Tan Siewert**
+    * Change namespace to io.github.sinuscosinustan
+
+*Not released yet*
+
 # Patch Release v3.2.7 (2024-11-02)
   * **n0ise9914**
     * api: add missing error codes

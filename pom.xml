@@ -4,13 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>me.tomsdevsn</groupId>
+    <groupId>io.github.sinuscosinustan</groupId>
     <artifactId>hetznercloud-api</artifactId>
     <version>3.2.7</version>
 
     <name>HetznerCloud-API</name>
     <description>Java-client for the Hetzner Cloud</description>
-    <url>https://github.com/tomsiewert/hetznercloud-api</url>
+    <url>https://github.com/sinuscosinustan/hetznercloud-api</url>
 
     <inceptionYear>2018</inceptionYear>
 
@@ -35,23 +35,23 @@
 
     <developers>
         <developer>
-            <id>tomsiewert</id>
-            <name>Tom Siewert</name>
-            <email>tom@siewert.io</email>
+            <id>sinuscosinustan</id>
+            <name>Tan Siewert</name>
+            <email>tan@siewert.io</email>
             <url>https://siewert.io</url>
         </developer>
     </developers>
 
     <scm>
-        <connection>scm:git:git@github.com:tomsiewert/hetznercloud-java.git</connection>
-        <developerConnection>scm:git:git@github.com:tomsiewert/hetznercloud-java.git</developerConnection>
-        <url>https://github.com/tomsiewert/hetznercloud-java/tree/main</url>
+        <connection>scm:git:git@github.com:sinuscosinustan/hetznercloud-java.git</connection>
+        <developerConnection>scm:git:git@github.com:sinuscosinustan/hetznercloud-java.git</developerConnection>
+        <url>https://github.com/sinuscosinustan/hetznercloud-java/tree/main</url>
         <tag>HEAD</tag>
     </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/tomsiewert/hetznercloud-java/issues</url>
+        <url>https://github.com/sinuscosinustan/hetznercloud-java/issues</url>
     </issueManagement>
 
     <properties>
