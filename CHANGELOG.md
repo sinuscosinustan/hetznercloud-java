@@ -1,3 +1,9 @@
+# Patch Release v4.0.1 (2025-02-10)
+  * **Tan Siewert**
+    * maven: fix deployment process
+
+*Released by Tan Siewert <tan@siewert.io>*
+
 # Major Release v4.0.0 (2025-02-10)
   * **Tan Siewert**
     * Change namespace to io.github.sinuscosinustan
