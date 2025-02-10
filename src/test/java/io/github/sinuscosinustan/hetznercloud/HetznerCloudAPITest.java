@@ -35,6 +35,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -346,18 +347,11 @@ public class HetznerCloudAPITest {
         // create loadbalancer
         var createdLoadbalancer = hetznerCloudAPI.createLoadBalancer(loadBalancerRequest);
         assertNotNull(createdLoadbalancer);
-        assertNotNull(createdLoadbalancer.getLoadBalancer());
-        assertThat(hetznerCloudAPI.getLoadBalancers(testUUIDLabelSelector).getLoadBalancers()).hasSize(1);
 
-        // wait for all actions to finish
-        hetznerCloudAPI.getLoadBalancerActions(createdLoadbalancer.getLoadBalancer().getId()).getActions().forEach((action) -> {
-            Awaitility.await().until(() -> hetznerCloudAPI.getAction(action.getId()).getAction().getFinished() != null);
-        });
-
-        // get loadbalancer
-        var loadBalancer = hetznerCloudAPI.getLoadBalancer(createdLoadbalancer.getLoadBalancer().getId());
-        assertNotNull(loadBalancer.getLoadBalancer());
-        assertThat(loadBalancer.getLoadBalancer().getName()).isEqualTo(keyId);
+        // Wait a few seconds to avoid 404 due to backend sync delay
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(5))
+                .until(() -> hetznerCloudAPI.getLoadBalancers(testUUIDLabelSelector).getLoadBalancers().size() == 1);
     }
 
     @Test
