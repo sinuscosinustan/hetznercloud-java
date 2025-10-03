@@ -2779,6 +2779,195 @@ public class HetznerCloudAPI {
         return dateFormat.format(date);
     }
 
+    /**
+     * Get all DNS zones
+     *
+     * @return List of DNS zones
+     */
+    public ZonesResponse getZones() {
+        return get("%s/zones".formatted(apiUrl), ZonesResponse.class);
+    }
+
+    /**
+     * Get all DNS zones with pagination
+     *
+     * @param paginationParameters Pagination parameters to apply to the request
+     * @return List of DNS zones
+     */
+    public ZonesResponse getZones(PaginationParameters paginationParameters) {
+        return get(
+                UrlBuilder.from("%s/zones".formatted(apiUrl))
+                        .queryParam("per_page", paginationParameters.getPerPage())
+                        .queryParam("page", paginationParameters.getPage())
+                        .toUri(),
+                ZonesResponse.class);
+    }
+
+    /**
+     * Get all DNS zones with label selector
+     *
+     * @param labelSelector Label selector to filter zones
+     * @return List of DNS zones
+     */
+    public ZonesResponse getZones(String labelSelector) {
+        return get(
+                UrlBuilder.from("%s/zones".formatted(apiUrl))
+                        .queryParam("label_selector", labelSelector)
+                        .toUri(),
+                ZonesResponse.class);
+    }
+
+    /**
+     * Get a specific DNS zone by ID
+     *
+     * @param id The zone ID
+     * @return Zone object
+     */
+    public ZoneResponse getZone(long id) {
+        return get("%s/zones/%s".formatted(apiUrl, id), ZoneResponse.class);
+    }
+
+    /**
+     * Get DNS zone by name
+     *
+     * @param name Zone name
+     * @return Zone response containing matching zones
+     */
+    public ZonesResponse getZoneByName(String name) {
+        return get(
+                UrlBuilder.from("%s/zones".formatted(apiUrl))
+                        .queryParam("name", name)
+                        .toUri(),
+                ZonesResponse.class);
+    }
+
+    /**
+     * Create a new DNS zone
+     *
+     * @param request Zone creation request
+     * @return Zone response
+     */
+    public ZoneResponse createZone(CreateZoneRequest request) {
+        return post("%s/zones".formatted(apiUrl), request, ZoneResponse.class);
+    }
+
+    /**
+     * Update a DNS zone
+     *
+     * @param id Zone ID
+     * @param request Zone update request
+     * @return Zone response
+     */
+    public ZoneResponse updateZone(long id, UpdateZoneRequest request) {
+        return put("%s/zones/%s".formatted(apiUrl, id), request, ZoneResponse.class);
+    }
+
+    /**
+     * Delete a DNS zone
+     *
+     * @param id Zone ID
+     * @return Action response
+     */
+    public ActionResponse deleteZone(long id) {
+        return delete("%s/zones/%s".formatted(apiUrl, id), ActionResponse.class);
+    }
+
+    /**
+     * Change protection of a DNS zone
+     *
+     * @param id Zone ID
+     * @param delete Protection setting for deletion
+     * @return Action response
+     */
+    public ActionResponse changeZoneProtection(long id, boolean delete) {
+        return post("%s/zones/%s/actions/change_protection".formatted(apiUrl, id),
+                Map.of("delete", delete), ActionResponse.class);
+    }
+
+    /**
+     * Get all RRSets for a zone
+     *
+     * @param zoneId Zone ID
+     * @return List of RRSets
+     */
+    public RRSetsResponse getRRSets(long zoneId) {
+        return get("%s/zones/%s/rrsets".formatted(apiUrl, zoneId), RRSetsResponse.class);
+    }
+
+    /**
+     * Get all RRSets for a zone with pagination
+     *
+     * @param zoneId Zone ID
+     * @param paginationParameters Pagination parameters
+     * @return List of RRSets
+     */
+    public RRSetsResponse getRRSets(long zoneId, PaginationParameters paginationParameters) {
+        return get(
+                UrlBuilder.from("%s/zones/%s/rrsets".formatted(apiUrl, zoneId))
+                        .queryParam("per_page", paginationParameters.getPerPage())
+                        .queryParam("page", paginationParameters.getPage())
+                        .toUri(),
+                RRSetsResponse.class);
+    }
+
+    /**
+     * Get a specific RRSet
+     *
+     * @param zoneId Zone ID
+     * @param rrsetId RRSet ID
+     * @return RRSet response
+     */
+    public RRSetResponse getRRSet(long zoneId, String rrsetId) {
+        return get("%s/zones/%s/rrsets/%s".formatted(apiUrl, zoneId, rrsetId), RRSetResponse.class);
+    }
+
+    /**
+     * Create a new RRSet
+     *
+     * @param zoneId Zone ID
+     * @param request RRSet creation request
+     * @return RRSet response
+     */
+    public RRSetResponse createRRSet(long zoneId, CreateRRSetRequest request) {
+        return post("%s/zones/%s/rrsets".formatted(apiUrl, zoneId), request, RRSetResponse.class);
+    }
+
+    /**
+     * Update an RRSet
+     *
+     * @param zoneId Zone ID
+     * @param rrsetId RRSet ID
+     * @param request RRSet update request
+     * @return RRSet response
+     */
+    public RRSetResponse updateRRSet(long zoneId, String rrsetId, UpdateRRSetRequest request) {
+        return put("%s/zones/%s/rrsets/%s".formatted(apiUrl, zoneId, rrsetId), request, RRSetResponse.class);
+    }
+
+    /**
+     * Delete an RRSet
+     *
+     * @param zoneId Zone ID
+     * @param rrsetId RRSet ID
+     * @return Action response
+     */
+    public ActionResponse deleteRRSet(long zoneId, String rrsetId) {
+        return delete("%s/zones/%s/rrsets/%s".formatted(apiUrl, zoneId, rrsetId), ActionResponse.class);
+    }
+
+    /**
+     * Change protection of an RRSet
+     *
+     * @param zoneId Zone ID
+     * @param rrsetId RRSet ID
+     * @param change Protection setting for change
+     * @return Action response
+     */
+    public ActionResponse changeRRSetProtection(long zoneId, String rrsetId, boolean change) {
+        return post("%s/zones/%s/rrsets/%s/actions/change_protection".formatted(apiUrl, zoneId, rrsetId),
+                Map.of("change", change), ActionResponse.class);
+    }
+
     private void validateHetznerOnlineApiUsage() {
         if (!apiUrl.contains("api.hetzner.com") && !isTestMode()) {
             throw new IllegalStateException("Storage Box methods can only be used with APIType.HETZNER_ONLINE. " +

@@ -23,6 +23,9 @@ jobs:
           distribution: 'adopt'
           cache: maven
 
+      - name: Download API specs from Hetzner
+        run: mkdir -p build && curl -o build/hetzner.spec.json https://docs.hetzner.cloud/hetzner.spec.json && curl -o build/cloud.spec.json https://docs.hetzner.cloud/cloud.spec.json
+
       - name: Test
         run: mvn --batch-mode -Dgpg.skip=true test
         env:
