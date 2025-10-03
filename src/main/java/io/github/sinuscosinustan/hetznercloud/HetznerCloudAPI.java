@@ -2378,15 +2378,14 @@ public class HetznerCloudAPI {
     /**
      * Attach a network to a Load Balancer.
      *
-     * @param id        ID of the Load Balancer
-     * @param networkId ID of the Network
-     * @param ip        IP for the Load Balancer in this private network
+     * @param id      ID of the Load Balancer
+     * @param request Network attachment request
      * @return ActionResponse
      */
-    public ActionResponse attachNetworkToLoadBalancer(long id, long networkId, String ip) {
+    public ActionResponse attachNetworkToLoadBalancer(long id, LoadBalancerNetworkRequest request) {
         return post(
-                API_URL + "/load_balancers/" + id + "/actions/attach_to_network",
-                new LoadBalancerNetworkRequest(networkId, ip),
+                apiUrl + "/load_balancers/" + id + "/actions/attach_to_network",
+                request,
                 ActionResponse.class);
     }
 
@@ -2395,13 +2394,26 @@ public class HetznerCloudAPI {
      *
      * @param id        ID of the Load Balancer
      * @param networkId ID of the Network
+     * @param ip        IP for the Load Balancer in this private network
      * @return ActionResponse
+     * @deprecated Use {@link #attachNetworkToLoadBalancer(long, LoadBalancerNetworkRequest)} instead
      */
+    @Deprecated
+    public ActionResponse attachNetworkToLoadBalancer(long id, long networkId, String ip) {
+        return attachNetworkToLoadBalancer(id, LoadBalancerNetworkRequest.builder().network(networkId).ip(ip).build());
+    }
+
+    /**
+     * Attach a network to a Load Balancer.
+     *
+     * @param id        ID of the Load Balancer
+     * @param networkId ID of the Network
+     * @return ActionResponse
+     * @deprecated Use {@link #attachNetworkToLoadBalancer(long, LoadBalancerNetworkRequest)} instead
+     */
+    @Deprecated
     public ActionResponse attachNetworkToLoadBalancer(long id, long networkId) {
-        return post(
-                API_URL + "/load_balancers/" + id + "/actions/attach_to_network",
-                new LoadBalancerNetworkRequest(networkId),
-                ActionResponse.class);
+        return attachNetworkToLoadBalancer(id, new LoadBalancerNetworkRequest(networkId));
     }
 
     /**

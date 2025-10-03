@@ -5,6 +5,7 @@
     * api: add support for api.hetzner.com
     * servertype: add locations and category attributes
     * loadbalancer: fix wrong mapping, add missing items
+    * loadbalancer: deprecate old network attachment methods
 
 *Not released yet*
 
