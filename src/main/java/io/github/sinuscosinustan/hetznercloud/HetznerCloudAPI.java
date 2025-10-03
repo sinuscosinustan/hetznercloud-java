@@ -2573,6 +2573,201 @@ public class HetznerCloudAPI {
     }
 
     /**
+     * Get all Storage Boxes
+     * @throws IllegalStateException if not using Hetzner Online API
+     */
+    public StorageBoxesResponse getStorageBoxes() {
+        validateHetznerOnlineApiUsage();
+        return get("%s/storage_boxes".formatted(apiUrl), StorageBoxesResponse.class);
+    }
+
+    /**
+     * Get all Storage Boxes with label selector
+     * @throws IllegalStateException if not using Hetzner Online API
+     */
+    public StorageBoxesResponse getStorageBoxes(String labelSelector) {
+        validateHetznerOnlineApiUsage();
+        return get(
+                UrlBuilder.from("%s/storage_boxes".formatted(apiUrl))
+                        .queryParam("label_selector", labelSelector)
+                        .toUri(),
+                StorageBoxesResponse.class);
+    }
+
+    /**
+     * Get all Storage Boxes with pagination
+     * @throws IllegalStateException if not using Hetzner Online API
+     */
+    public StorageBoxesResponse getStorageBoxes(PaginationParameters paginationParameters) {
+        validateHetznerOnlineApiUsage();
+        return get(
+                UrlBuilder.from("%s/storage_boxes".formatted(apiUrl))
+                        .queryParam("page", paginationParameters.getPage())
+                        .queryParam("per_page", paginationParameters.getPerPage())
+                        .toUri(),
+                StorageBoxesResponse.class);
+    }
+
+    /**
+     * Get Storage Box by ID
+     * @throws IllegalStateException if not using Hetzner Online API
+     */
+    public StorageBoxResponse getStorageBox(long id) {
+        validateHetznerOnlineApiUsage();
+        return get("%s/storage_boxes/%s".formatted(apiUrl, id), StorageBoxResponse.class);
+    }
+
+    /**
+     * Get Storage Box by name
+     * @throws IllegalStateException if not using Hetzner Online API
+     */
+    public StorageBoxesResponse getStorageBoxByName(String name) {
+        validateHetznerOnlineApiUsage();
+        return get(
+                UrlBuilder.from("%s/storage_boxes".formatted(apiUrl))
+                        .queryParam("name", name)
+                        .toUri(),
+                StorageBoxesResponse.class);
+    }
+
+    /**
+     * Create a new Storage Box
+     * @throws IllegalStateException if not using Hetzner Online API
+     */
+    public StorageBoxResponse createStorageBox(CreateStorageBoxRequest request) {
+        validateHetznerOnlineApiUsage();
+        return post("%s/storage_boxes".formatted(apiUrl), request, StorageBoxResponse.class);
+    }
+
+    /**
+     * Update a Storage Box
+     *
+     * @param id ID of the Storage Box
+     * @param request Update request object
+     * @return StorageBoxResponse
+     * @throws IllegalStateException if not using Hetzner Online API
+     */
+    public StorageBoxResponse updateStorageBox(long id, UpdateStorageBoxRequest request) {
+        validateHetznerOnlineApiUsage();
+        return put("%s/storage_boxes/%s".formatted(apiUrl, id), request, StorageBoxResponse.class);
+    }
+
+    /**
+     * Delete a Storage Box
+     *
+     * @param id ID of the Storage Box
+     * @return ActionResponse
+     * @throws IllegalStateException if not using Hetzner Online API
+     */
+    public ActionResponse deleteStorageBox(long id) {
+        validateHetznerOnlineApiUsage();
+        return delete("%s/storage_boxes/%s".formatted(apiUrl, id), ActionResponse.class);
+    }
+
+    /**
+     * Create a sub-account for a Storage Box
+     *
+     * @param storageBoxId ID of the Storage Box
+     * @param request Sub-account creation request
+     * @return StorageBoxResponse
+     * @throws IllegalStateException if not using Hetzner Online API
+     */
+    public StorageBoxResponse createStorageBoxSubAccount(long storageBoxId, CreateStorageBoxSubAccountRequest request) {
+        validateHetznerOnlineApiUsage();
+        return post("%s/storage_boxes/%s/sub_accounts".formatted(apiUrl, storageBoxId), request, StorageBoxResponse.class);
+    }
+
+    /**
+     * Update a Storage Box sub-account
+     *
+     * @param storageBoxId ID of the Storage Box
+     * @param username Username of the sub-account
+     * @param request Sub-account update request
+     * @return StorageBoxResponse
+     * @throws IllegalStateException if not using Hetzner Online API
+     */
+    public StorageBoxResponse updateStorageBoxSubAccount(long storageBoxId, String username, CreateStorageBoxSubAccountRequest request) {
+        validateHetznerOnlineApiUsage();
+        return put("%s/storage_boxes/%s/sub_accounts/%s".formatted(apiUrl, storageBoxId, username), request, StorageBoxResponse.class);
+    }
+
+    /**
+     * Delete a Storage Box sub-account
+     *
+     * @param storageBoxId ID of the Storage Box
+     * @param username Username of the sub-account to delete
+     * @return ActionResponse
+     * @throws IllegalStateException if not using Hetzner Online API
+     */
+    public ActionResponse deleteStorageBoxSubAccount(long storageBoxId, String username) {
+        validateHetznerOnlineApiUsage();
+        return delete("%s/storage_boxes/%s/sub_accounts/%s".formatted(apiUrl, storageBoxId, username), ActionResponse.class);
+    }
+
+    /**
+     * Get snapshots for a Storage Box
+     *
+     * @param storageBoxId ID of the Storage Box
+     * @return StorageBoxSnapshotsResponse
+     * @throws IllegalStateException if not using Hetzner Online API
+     */
+    public StorageBoxSnapshotsResponse getStorageBoxSnapshots(long storageBoxId) {
+        validateHetznerOnlineApiUsage();
+        return get("%s/storage_boxes/%s/snapshots".formatted(apiUrl, storageBoxId), StorageBoxSnapshotsResponse.class);
+    }
+
+    /**
+     * Rollback Storage Box to a snapshot
+     *
+     * @param storageBoxId ID of the Storage Box
+     * @param snapshotName Name of the snapshot to rollback to
+     * @return ActionResponse
+     * @throws IllegalStateException if not using Hetzner Online API
+     */
+    public ActionResponse rollbackStorageBoxToSnapshot(long storageBoxId, String snapshotName) {
+        validateHetznerOnlineApiUsage();
+        var requestBody = objectMapper.createObjectNode();
+        requestBody.put("snapshot", snapshotName);
+        return post("%s/storage_boxes/%s/actions/rollback".formatted(apiUrl, storageBoxId), requestBody, ActionResponse.class);
+    }
+
+    /**
+     * Reset Storage Box password
+     *
+     * @param storageBoxId ID of the Storage Box
+     * @return ActionResponse
+     * @throws IllegalStateException if not using Hetzner Online API
+     */
+    public ActionResponse resetStorageBoxPassword(long storageBoxId) {
+        validateHetznerOnlineApiUsage();
+        return post("%s/storage_boxes/%s/actions/reset_password".formatted(apiUrl, storageBoxId), ActionResponse.class);
+    }
+
+    /**
+     * Enable snapshot plan for Storage Box
+     *
+     * @param storageBoxId ID of the Storage Box
+     * @return ActionResponse
+     * @throws IllegalStateException if not using Hetzner Online API
+     */
+    public ActionResponse enableStorageBoxSnapshotPlan(long storageBoxId) {
+        validateHetznerOnlineApiUsage();
+        return post("%s/storage_boxes/%s/actions/enable_snapshot_plan".formatted(apiUrl, storageBoxId), ActionResponse.class);
+    }
+
+    /**
+     * Disable snapshot plan for Storage Box
+     *
+     * @param storageBoxId ID of the Storage Box
+     * @return ActionResponse
+     * @throws IllegalStateException if not using Hetzner Online API
+     */
+    public ActionResponse disableStorageBoxSnapshotPlan(long storageBoxId) {
+        validateHetznerOnlineApiUsage();
+        return post("%s/storage_boxes/%s/actions/disable_snapshot_plan".formatted(apiUrl, storageBoxId), ActionResponse.class);
+    }
+
+    /**
      * Converts a Date to the ISO-8601 format
      *
      * @param date Date to be converted
@@ -2584,7 +2779,7 @@ public class HetznerCloudAPI {
         return dateFormat.format(date);
     }
 
-    private void validateStorageBoxApiUsage() {
+    private void validateHetznerOnlineApiUsage() {
         if (!apiUrl.contains("api.hetzner.com") && !isTestMode()) {
             throw new IllegalStateException("Storage Box methods can only be used with APIType.HETZNER_ONLINE. " +
                     "Please create the API instance with: new HetznerCloudAPI(token, APIType.HETZNER_ONLINE)");

@@ -6,6 +6,7 @@
     * servertype: add locations and category attributes
     * loadbalancer: fix wrong mapping, add missing items
     * loadbalancer: deprecate old network attachment methods
+    * storagebox: add implementation
 
 *Not released yet*
 
