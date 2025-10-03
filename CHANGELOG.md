@@ -4,6 +4,7 @@
     * api: send proper user-agent
     * api: add support for api.hetzner.com
     * servertype: add locations and category attributes
+    * loadbalancer: fix wrong mapping, add missing items
 
 *Not released yet*
 

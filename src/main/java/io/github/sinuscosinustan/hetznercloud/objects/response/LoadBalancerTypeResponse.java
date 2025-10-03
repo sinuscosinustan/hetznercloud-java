@@ -4,12 +4,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import io.github.sinuscosinustan.hetznercloud.objects.general.LoadBalancerType;
 
-import java.util.List;
-
 @Data
 public class LoadBalancerTypeResponse {
 
-    @JsonProperty("load_balancer_types")
-    private List<LoadBalancerType> loadBalancerTypes;
+    @JsonProperty("load_balancer_type")
+    private LoadBalancerType loadBalancerType;
 
 }

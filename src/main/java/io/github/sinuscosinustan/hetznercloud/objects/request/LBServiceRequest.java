@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NonNull;
 import io.github.sinuscosinustan.hetznercloud.objects.general.LBHealthCheck;
 import io.github.sinuscosinustan.hetznercloud.objects.general.LBServiceHttp;
 
@@ -14,9 +15,12 @@ import io.github.sinuscosinustan.hetznercloud.objects.general.LBServiceHttp;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class LBServiceRequest {
 
+    @NonNull
     private String protocol;
+    @NonNull
     @JsonProperty("listen_port")
     private Long listenPort;
+    @NonNull
     @JsonProperty("destination_port")
     private Long destinationPort;
     private Boolean proxyprotocol;

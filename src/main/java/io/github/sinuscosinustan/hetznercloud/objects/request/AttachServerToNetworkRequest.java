@@ -18,4 +18,6 @@ public class AttachServerToNetworkRequest {
     private String ip;
     @JsonProperty("alias_ips")
     private List<String> aliasIps;
+    @JsonProperty("ip_range")
+    private String ipRange;
 }
