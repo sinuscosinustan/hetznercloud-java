@@ -13,6 +13,7 @@ import io.github.sinuscosinustan.hetznercloud.objects.enums.PlacementGroupType;
 import io.github.sinuscosinustan.hetznercloud.objects.pagination.PaginationParameters;
 import io.github.sinuscosinustan.hetznercloud.objects.request.*;
 import io.github.sinuscosinustan.hetznercloud.objects.response.*;
+import io.github.sinuscosinustan.hetznercloud.util.VersionUtil;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,10 +25,12 @@ import java.util.*;
 public class HetznerCloudAPI {
 
     private static final String API_URL = "https://api.hetzner.cloud/v1";
+    private static final String DEFAULT_USER_AGENT = "sinuscosinustan-hetznercloud-java/%s".formatted(VersionUtil.getLibraryVersion());
 
     private final OkHttpClient client;
 
     private final String hcloudToken;
+    private final String userAgent;
     private final ObjectMapper objectMapper;
 
     /**
@@ -55,8 +58,16 @@ public class HetznerCloudAPI {
         this.hcloudToken = hcloudToken;
 
         this.client = client;
+
         objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
+
+    private static String buildUserAgent(String userAgentPrefix) {
+        if (userAgentPrefix != null && !userAgentPrefix.isBlank()) {
+            return userAgentPrefix + " " + DEFAULT_USER_AGENT;
+        }
+        return DEFAULT_USER_AGENT;
     }
 
     /**
@@ -2502,7 +2513,8 @@ public class HetznerCloudAPI {
             final String responseBody = response.body().string();
 
             if (!response.isSuccessful()) {
-                throw new APIRequestException(objectMapper.readValue(responseBody, APIErrorResponse.class));
+                String correlationId = response.header("X-Correlation-Id");
+                throw new APIRequestException(objectMapper.readValue(responseBody, APIErrorResponse.class), correlationId);
             }
 
             if (String.class.equals(clazz)) {
@@ -2527,6 +2539,7 @@ public class HetznerCloudAPI {
         return client.newCall(new Request.Builder()
                 .addHeader("Authorization", "Bearer " + hcloudToken)
                 .addHeader("Accept", "application/json")
+                .addHeader("User-Agent", userAgent)
                 .url(url)
                 .method(method.toString(), requestBody).build());
     }

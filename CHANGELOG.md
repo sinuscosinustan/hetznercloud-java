@@ -1,6 +1,7 @@
 # For next release
   * **Tan Siewert**
     * runtime: bump java requirement to jdk 17
+    * api: send proper user-agent
 
 *Not released yet*
 
