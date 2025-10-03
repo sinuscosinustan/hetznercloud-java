@@ -2,6 +2,7 @@
   * **Tan Siewert**
     * runtime: bump java requirement to jdk 17
     * api: send proper user-agent
+    * api: add support for api.hetzner.com
 
 *Not released yet*
 

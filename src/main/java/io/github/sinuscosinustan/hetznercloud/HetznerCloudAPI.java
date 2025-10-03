@@ -7,6 +7,7 @@ import io.github.sinuscosinustan.hetznercloud.exception.APIRequestException;
 import io.github.sinuscosinustan.hetznercloud.objects.enums.ImageType;
 import io.github.sinuscosinustan.hetznercloud.objects.enums.ActionStatus;
 import io.github.sinuscosinustan.hetznercloud.objects.enums.Architecture;
+import io.github.sinuscosinustan.hetznercloud.objects.enums.APIType;
 import io.github.sinuscosinustan.hetznercloud.objects.general.FWApplicationTarget;
 import io.github.sinuscosinustan.hetznercloud.objects.general.FirewallRule;
 import io.github.sinuscosinustan.hetznercloud.objects.enums.PlacementGroupType;
@@ -24,40 +25,97 @@ import java.util.*;
 
 public class HetznerCloudAPI {
 
-    private static final String API_URL = "https://api.hetzner.cloud/v1";
     private static final String DEFAULT_USER_AGENT = "sinuscosinustan-hetznercloud-java/%s".formatted(VersionUtil.getLibraryVersion());
 
+    private final String apiUrl;
     private final OkHttpClient client;
-
     private final String hcloudToken;
     private final String userAgent;
     private final ObjectMapper objectMapper;
 
     /**
-     * Initial method to use the API
+     * Initial method to use the API with default Cloud API endpoint
      *
      * @param hcloudToken API-Token for Hetzner Cloud API
      * @see HetznerCloudAPI(String, OkHttpClient)
      */
     public HetznerCloudAPI(String hcloudToken) {
-        this(hcloudToken, new OkHttpClient());
+        this(hcloudToken, APIType.CLOUD);
     }
 
     /**
-     * Initial method to use the API
+     * Initial method to use the API with default Cloud API endpoint
      *
      * @param hcloudToken API-Token for Hetzner Cloud API
-     *              The API token can be created within the Hetzner Cloud Console
+     *              The API token can be created within the Hetzner Console
      * @param client OkHttpClient instance to be used
      */
     public HetznerCloudAPI(String hcloudToken, OkHttpClient client) {
+        this(hcloudToken, APIType.CLOUD, client);
+    }
+
+    /**
+     * Initial method to use the API with specified API type
+     *
+     * @param hcloudToken API-Token for Hetzner API
+     * @param apiType Type of API to use (Cloud or Hetzner Online)
+     */
+    public HetznerCloudAPI(String hcloudToken, APIType apiType) {
+        this(hcloudToken, apiType, new OkHttpClient());
+    }
+
+    /**
+     * Initial method to use the API with custom base URL
+     *
+     * @param hcloudToken API-Token for Hetzner API
+     * @param customApiUrl Custom API base URL
+     */
+    public HetznerCloudAPI(String hcloudToken, String customApiUrl) {
+        this(hcloudToken, customApiUrl, new OkHttpClient(), null);
+    }
+
+    /**
+     * Initial method to use the API with specified API type and custom client
+     *
+     * @param hcloudToken API-Token for Hetzner API
+     * @param apiType Type of API to use (Cloud or Hetzner Online)
+     * @param client OkHttpClient instance to be used
+     */
+    public HetznerCloudAPI(String hcloudToken, APIType apiType, OkHttpClient client) {
+        this(hcloudToken, apiType.getBaseUrl(), client, null);
+    }
+
+    /**
+     * Initial method to use the API with custom base URL and client
+     *
+     * @param hcloudToken API-Token for Hetzner API
+     * @param customApiUrl Custom API base URL
+     * @param client OkHttpClient instance to be used
+     */
+    public HetznerCloudAPI(String hcloudToken, String customApiUrl, OkHttpClient client) {
+        this(hcloudToken, customApiUrl, client, null);
+    }
+
+    /**
+     * Initial method to use the API with custom base URL, client and user agent prefix
+     *
+     * @param hcloudToken API-Token for Hetzner API
+     * @param customApiUrl Custom API base URL
+     * @param client OkHttpClient instance to be used
+     * @param userAgentPrefix Prefix that should be added in front of the default user agent
+     */
+    private HetznerCloudAPI(String hcloudToken, String apiUrl, OkHttpClient client, String userAgentPrefix) {
         if (hcloudToken == null || hcloudToken.isBlank()) {
             throw new RuntimeException("no Hetzner cloud token provided");
         }
+        if (apiUrl == null || apiUrl.isBlank()) {
+            throw new RuntimeException("API URL cannot be null or blank");
+        }
 
         this.hcloudToken = hcloudToken;
-
-        this.client = client;
+        this.apiUrl = apiUrl;
+        this.client = client != null ? client : new OkHttpClient();
+        this.userAgent = buildUserAgent(userAgentPrefix);
 
         objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -104,7 +162,7 @@ public class HetznerCloudAPI {
     @Deprecated
     public ActionsResponse getActions(ActionStatus actionStatus, PaginationParameters paginationParameters) {
         return get(
-                UrlBuilder.from(API_URL + "/actions")
+                UrlBuilder.from(apiUrl + "/actions")
                         .queryParamIfPresent("status", Optional.ofNullable(actionStatus))
                         .queryParamIfPresent("page", Optional.ofNullable(paginationParameters.page))
                         .queryParamIfPresent("per_page", Optional.ofNullable(paginationParameters.perPage))
@@ -120,7 +178,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse getAction(long id) {
         return get(
-                API_URL + "/actions/" + id,
+                apiUrl + "/actions/" + id,
                 ActionResponse.class);
     }
 
@@ -152,7 +210,7 @@ public class HetznerCloudAPI {
      */
     public ServersResponse getServers(String labelSelector, PaginationParameters paginationParameters) {
         return get(
-                UrlBuilder.from(API_URL + "/servers")
+                UrlBuilder.from(apiUrl + "/servers")
                         .queryParamIfPresent("label_selector", Optional.ofNullable(labelSelector))
                         .queryParamIfPresent("page", Optional.ofNullable(paginationParameters.page))
                         .queryParamIfPresent("per_page", Optional.ofNullable(paginationParameters.perPage))
@@ -168,7 +226,7 @@ public class HetznerCloudAPI {
      */
     public ServersResponse getServer(String name) {
         return get(
-                UrlBuilder.from(API_URL + "/servers")
+                UrlBuilder.from(apiUrl + "/servers")
                         .queryParam("name", name)
                         .toUri(),
                 ServersResponse.class);
@@ -182,7 +240,7 @@ public class HetznerCloudAPI {
      */
     public ServerResponse getServer(long id) {
         return get(
-                API_URL + "/servers/" + id,
+                apiUrl + "/servers/" + id,
                 ServerResponse.class);
     }
 
@@ -195,7 +253,7 @@ public class HetznerCloudAPI {
     public CreateServerResponse createServer(CreateServerRequest createServerRequest) {
         createServerRequest.setServerType(createServerRequest.getServerType().toLowerCase());   // Case-sensitive fix
         return post(
-                API_URL + "/servers",
+                apiUrl + "/servers",
                 createServerRequest,
                 CreateServerResponse.class);
     }
@@ -208,7 +266,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse deleteServer(long id) {
         return delete(
-                API_URL + "/servers/" + id,
+                apiUrl + "/servers/" + id,
                 ActionResponse.class);
     }
 
@@ -221,7 +279,7 @@ public class HetznerCloudAPI {
      */
     public ServerResponse updateServer(long id, UpdateServerRequest updateServerRequest) {
         return put(
-                API_URL + "/servers/" + id,
+                apiUrl + "/servers/" + id,
                 updateServerRequest,
                 ServerResponse.class);
     }
@@ -234,7 +292,7 @@ public class HetznerCloudAPI {
      */
     public ConsoleResponse requestConsole(long id) {
         return post(
-                API_URL + "/servers/" + id + "/actions/request_console",
+                apiUrl + "/servers/" + id + "/actions/request_console",
                 ConsoleResponse.class);
     }
 
@@ -247,7 +305,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse changeServerProtection(long id, ChangeProtectionRequest changeProtection) {
         return post(
-                API_URL + "/servers/" + id + "/actions/change_protection",
+                apiUrl + "/servers/" + id + "/actions/change_protection",
                 changeProtection,
                 ActionResponse.class);
     }
@@ -262,7 +320,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse addServerToPlacementGroup(long serverId, long placementGroupId) {
         return post(
-                API_URL + "/servers/" + serverId + "/actions/add_to_placement_group",
+                apiUrl + "/servers/" + serverId + "/actions/add_to_placement_group",
                 new PlacementGroupAddServerRequest(placementGroupId),
                 ActionResponse.class);
     }
@@ -275,7 +333,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse removeServerFromPlacementGroup(long serverId) {
         return post(
-                API_URL + "/servers/" + serverId + "/actions/remove_from_placement_group",
+                apiUrl + "/servers/" + serverId + "/actions/remove_from_placement_group",
                 ActionResponse.class);
     }
 
@@ -287,7 +345,7 @@ public class HetznerCloudAPI {
      */
     public ActionsResponse getServerActions(long id) {
         return get(
-                API_URL + "/servers/" + id + "/actions",
+                apiUrl + "/servers/" + id + "/actions",
                 ActionsResponse.class);
     }
 
@@ -298,7 +356,7 @@ public class HetznerCloudAPI {
      * @return ActionsResponse object
      */
     public ActionsResponse getFloatingIPActions(long id) {
-        return get(API_URL + "/floating_ips/" + id + "/actions",
+        return get(apiUrl + "/floating_ips/" + id + "/actions",
                 ActionsResponse.class);
     }
 
@@ -310,7 +368,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse powerOnServer(long id) {
         return post(
-                API_URL + "/servers/" + id + "/actions/poweron",
+                apiUrl + "/servers/" + id + "/actions/poweron",
                 ActionResponse.class);
     }
 
@@ -322,7 +380,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse powerOffServer(long id) {
         return post(
-                API_URL + "/servers/" + id + "/actions/poweroff",
+                apiUrl + "/servers/" + id + "/actions/poweroff",
                 ActionResponse.class);
     }
 
@@ -334,7 +392,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse rebootServer(long id) {
         return post(
-                API_URL + "/servers/" + id + "/actions/reboot",
+                apiUrl + "/servers/" + id + "/actions/reboot",
                 ActionResponse.class);
     }
 
@@ -346,7 +404,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse resetServer(long id) {
         return post(
-                API_URL + "/servers/" + id + "/actions/reset",
+                apiUrl + "/servers/" + id + "/actions/reset",
                 ActionResponse.class);
     }
 
@@ -358,7 +416,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse shutdownServer(long id) {
         return post(
-                API_URL + "/servers/" + id + "/actions/shutdown",
+                apiUrl + "/servers/" + id + "/actions/shutdown",
                 ActionResponse.class);
     }
 
@@ -370,7 +428,7 @@ public class HetznerCloudAPI {
      */
     public ResetRootPasswordResponse resetRootPassword(long id) {
         return post(
-                API_URL + "/servers/" + id + "/actions/reset_password",
+                apiUrl + "/servers/" + id + "/actions/reset_password",
                 ResetRootPasswordResponse.class);
     }
 
@@ -382,7 +440,7 @@ public class HetznerCloudAPI {
      */
     public EnableRescueResponse enableRescue(long id) {
         return post(
-                API_URL + "/servers/" + id + "/actions/enable_rescue",
+                apiUrl + "/servers/" + id + "/actions/enable_rescue",
                 EnableRescueResponse.class);
     }
 
@@ -395,7 +453,7 @@ public class HetznerCloudAPI {
      */
     public EnableRescueResponse enableRescue(long id, EnableRescueRequest enableRescueRequest) {
         return post(
-                API_URL + "/servers/" + id + "/actions/enable_rescue",
+                apiUrl + "/servers/" + id + "/actions/enable_rescue",
                 enableRescueRequest,
                 EnableRescueResponse.class);
     }
@@ -410,7 +468,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse disableRescue(long id) {
         return post(
-                API_URL + "/servers/" + id + "/actions/disable_rescue",
+                apiUrl + "/servers/" + id + "/actions/disable_rescue",
                 ActionResponse.class);
     }
 
@@ -425,7 +483,7 @@ public class HetznerCloudAPI {
      */
     public RebuildServerResponse rebuildServer(long id, RebuildServerRequest rebuildServerRequest) {
         return post(
-                API_URL + "/servers/" + id + "/actions/rebuild",
+                apiUrl + "/servers/" + id + "/actions/rebuild",
                 rebuildServerRequest,
                 RebuildServerResponse.class);
     }
@@ -441,7 +499,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse changeServerType(long id, ChangeTypeRequest changeTypeRequest) {
         return post(
-                API_URL + "/servers/" + id + "/actions/change_type",
+                apiUrl + "/servers/" + id + "/actions/change_type",
                 changeTypeRequest,
                 ActionResponse.class);
     }
@@ -458,7 +516,7 @@ public class HetznerCloudAPI {
     public MetricsResponse getServerMetrics(long id, String metricType, String start, String end) {
         return get(
                 UrlBuilder.from(
-                        API_URL + "/servers/" + id + "/metrics")
+                        apiUrl + "/servers/" + id + "/metrics")
                         .queryParam("type", metricType)
                         .queryParam("start", start)
                         .queryParam("end", end)
@@ -475,7 +533,7 @@ public class HetznerCloudAPI {
      */
     public CreateImageResponse createImage(long id, CreateImageRequest createImageRequest) {
         return post(
-                API_URL + "/servers/" + id + "/actions/create_image",
+                apiUrl + "/servers/" + id + "/actions/create_image",
                 createImageRequest,
                 CreateImageResponse.class);
     }
@@ -490,7 +548,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse changeImageProtection(long id, ChangeProtectionRequest protectionRequest) {
         return post(
-                API_URL + "/images/" + id + "/actions/change_protection",
+                apiUrl + "/images/" + id + "/actions/change_protection",
                 protectionRequest,
                 ActionResponse.class);
     }
@@ -505,7 +563,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse enableBackup(long id) {
         return post(
-                API_URL + "/servers/" + id + "/actions/enable_backup",
+                apiUrl + "/servers/" + id + "/actions/enable_backup",
                 ActionResponse.class);
     }
 
@@ -547,7 +605,7 @@ public class HetznerCloudAPI {
      */
     public ISOSResponse getISOS(Architecture architecture, PaginationParameters paginationParameters) {
         return get(
-                UrlBuilder.from(API_URL + "/isos")
+                UrlBuilder.from(apiUrl + "/isos")
                         .queryParamIfPresent("architecture", Optional.ofNullable(architecture))
                         .queryParamIfPresent("page", Optional.ofNullable(paginationParameters.page))
                         .queryParamIfPresent("per_page", Optional.ofNullable(paginationParameters.perPage))
@@ -563,7 +621,7 @@ public class HetznerCloudAPI {
      */
     public ISOResponse getISO(long id) {
         return get(
-                API_URL + "/isos/" + id,
+                apiUrl + "/isos/" + id,
                 ISOResponse.class);
     }
 
@@ -578,7 +636,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse attachISO(long id, AttachISORequest attachISORequest) {
         return post(
-                API_URL + "/servers/" + id + "/actions/attach_iso",
+                apiUrl + "/servers/" + id + "/actions/attach_iso",
                 attachISORequest,
                 ActionResponse.class);
     }
@@ -591,7 +649,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse detachISO(long id) {
         return post(
-                API_URL + "/servers/" + id + "/actions/detach_iso",
+                apiUrl + "/servers/" + id + "/actions/detach_iso",
                 ActionResponse.class);
     }
 
@@ -606,7 +664,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse changeDNSPTR(long id, ChangeReverseDNSRequest changeReverseDNSRequest) {
         return post(
-                API_URL + "/servers/" + id + "/actions/change_dns_ptr",
+                apiUrl + "/servers/" + id + "/actions/change_dns_ptr",
                 changeReverseDNSRequest,
                 ActionResponse.class);
     }
@@ -619,7 +677,7 @@ public class HetznerCloudAPI {
      */
     public DatacenterResponse getDatacenter(long id) {
         return get(
-                API_URL + "/datacenters/" + id,
+                apiUrl + "/datacenters/" + id,
                 DatacenterResponse.class);
     }
 
@@ -630,7 +688,7 @@ public class HetznerCloudAPI {
      */
     public DatacentersResponse getDatacenters() {
         return get(
-                API_URL + "/datacenters",
+                apiUrl + "/datacenters",
                 DatacentersResponse.class);
     }
 
@@ -642,7 +700,9 @@ public class HetznerCloudAPI {
      */
     public DatacentersResponse getDatacenter(String name) {
         return get(
-                API_URL + "/datacenters?name=" + name,
+                UrlBuilder.from(apiUrl + "/datacenters")
+                        .queryParam("name", name)
+                        .toUri(),
                 DatacentersResponse.class);
     }
 
@@ -686,7 +746,7 @@ public class HetznerCloudAPI {
      */
     public FirewallsResponse getFirewalls(String labelSelector, PaginationParameters paginationParameters) {
         return get(
-                UrlBuilder.from(API_URL + "/firewalls")
+                UrlBuilder.from(apiUrl + "/firewalls")
                         .queryParamIfPresent("label_selector", Optional.ofNullable(labelSelector))
                         .queryParamIfPresent("page", Optional.ofNullable(paginationParameters.page))
                         .queryParamIfPresent("per_page", Optional.ofNullable(paginationParameters.perPage))
@@ -702,7 +762,7 @@ public class HetznerCloudAPI {
      */
     public CreateFirewallResponse createFirewall(CreateFirewallRequest createFirewallRequest) {
         return post(
-                API_URL + "/firewalls",
+                apiUrl + "/firewalls",
                 createFirewallRequest,
                 CreateFirewallResponse.class);
     }
@@ -714,7 +774,7 @@ public class HetznerCloudAPI {
      */
     public void deleteFirewall(long id) {
         delete(
-                API_URL + "/firewalls/" + id,
+                apiUrl + "/firewalls/" + id,
                 String.class);
     }
 
@@ -726,7 +786,7 @@ public class HetznerCloudAPI {
      */
     public CreateFirewallResponse getFirewall(long id) {
         return get(
-                API_URL + "/firewalls/" + id,
+                apiUrl + "/firewalls/" + id,
                 CreateFirewallResponse.class);
     }
 
@@ -739,7 +799,7 @@ public class HetznerCloudAPI {
      */
     public CreateFirewallResponse updateFirewall(long id, UpdateFirewallRequest updateFirewallRequest) {
         return put(
-                API_URL + "/firewalls/" + id,
+                apiUrl + "/firewalls/" + id,
                 updateFirewallRequest,
                 CreateFirewallResponse.class);
     }
@@ -752,7 +812,7 @@ public class HetznerCloudAPI {
      */
     public ActionsResponse getFirewallActions(long id) {
         return get(
-                String.format("%s/firewalls/%s/actions", API_URL, id),
+                String.format("%s/firewalls/%s/actions", apiUrl, id),
                 ActionsResponse.class);
     }
 
@@ -765,7 +825,7 @@ public class HetznerCloudAPI {
      */
     public ActionsResponse applyFirewallToResources(long id, List<FWApplicationTarget> applicationTargets) {
         return post(
-                API_URL + "/firewalls/" + id + "/actions/apply_to_resources",
+                apiUrl + "/firewalls/" + id + "/actions/apply_to_resources",
                 Map.of("apply_to", applicationTargets),
                 ActionsResponse.class);
     }
@@ -779,7 +839,7 @@ public class HetznerCloudAPI {
      */
     public ActionsResponse removeFirewallFromResources(long id, List<FWApplicationTarget> removalTargets) {
         return post(
-                API_URL + "/firewalls/" + id + "/actions/remove_from_resources",
+                apiUrl + "/firewalls/" + id + "/actions/remove_from_resources",
                 Map.of("remove_from", removalTargets),
                 ActionsResponse.class);
     }
@@ -792,7 +852,7 @@ public class HetznerCloudAPI {
      * @see #setFirewallRules(long, List)
      */
     public ActionsResponse removeAllRulesFromFirewall(long id) {
-        return setFirewallRules(id, Collections.EMPTY_LIST);
+        return setFirewallRules(id, Collections.emptyList());
     }
 
     /**
@@ -805,7 +865,7 @@ public class HetznerCloudAPI {
      */
     public ActionsResponse setFirewallRules(long id, List<FirewallRule> firewallRules) {
         return post(
-                API_URL + "/firewalls/" + id + "/actions/set_rules",
+                apiUrl + "/firewalls/" + id + "/actions/set_rules",
                 Map.of("rules", firewallRules),
                 ActionsResponse.class);
     }
@@ -817,7 +877,7 @@ public class HetznerCloudAPI {
      */
     public PricingResponse getPricing() {
         return get(
-                API_URL + "/pricing",
+                apiUrl + "/pricing",
                 PricingResponse.class);
     }
 
@@ -849,7 +909,7 @@ public class HetznerCloudAPI {
      */
     public PrimaryIPsResponse getPrimaryIPs(String labelSelector, PaginationParameters paginationParameters) {
         return get(
-                UrlBuilder.from(API_URL + "/primary_ips")
+                UrlBuilder.from(apiUrl + "/primary_ips")
                         .queryParamIfPresent("label_selector", Optional.ofNullable(labelSelector))
                         .queryParamIfPresent("page", Optional.ofNullable(paginationParameters.page))
                         .queryParamIfPresent("per_page", Optional.ofNullable(paginationParameters.perPage))
@@ -865,7 +925,7 @@ public class HetznerCloudAPI {
      */
     public PrimaryIPsResponse getPrimaryIPByName(String name) {
         return get(
-                UrlBuilder.from(API_URL + "/primary_ips")
+                UrlBuilder.from(apiUrl + "/primary_ips")
                         .queryParam("name", name)
                         .toUri(),
                 PrimaryIPsResponse.class);
@@ -879,7 +939,7 @@ public class HetznerCloudAPI {
      */
     public PrimaryIPsResponse getPrimaryIP(String ip) {
         return get(
-                UrlBuilder.from(API_URL + "/primary_ips")
+                UrlBuilder.from(apiUrl + "/primary_ips")
                         .queryParam("ip", ip)
                         .toUri(),
                 PrimaryIPsResponse.class);
@@ -893,7 +953,7 @@ public class HetznerCloudAPI {
      */
     public PrimaryIPResponse getPrimaryIP(long id) {
         return get(
-                API_URL + "/primary_ips/" + id,
+                apiUrl + "/primary_ips/" + id,
                 PrimaryIPResponse.class);
     }
 
@@ -905,7 +965,7 @@ public class HetznerCloudAPI {
      */
     public CreatePrimaryIPResponse createPrimaryIP(CreatePrimaryIPRequest createPrimaryIPRequest) {
         return post(
-                API_URL + "/primary_ips",
+                apiUrl + "/primary_ips",
                 createPrimaryIPRequest,
                 CreatePrimaryIPResponse.class);
     }
@@ -917,7 +977,7 @@ public class HetznerCloudAPI {
      */
     public PrimaryIPResponse updatePrimaryIP(long id, UpdatePrimaryIPRequest updatePrimaryIPRequest) {
         return put(
-                API_URL + "/primary_ips/" + id,
+                apiUrl + "/primary_ips/" + id,
                 updatePrimaryIPRequest,
                 PrimaryIPResponse.class);
     }
@@ -931,7 +991,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse assignPrimaryIP(long id, AssignPrimaryIPRequest assignPrimaryIPRequest) {
         return post(
-                API_URL + "/primary_ips/" + id + "/actions/assign",
+                apiUrl + "/primary_ips/" + id + "/actions/assign",
                 assignPrimaryIPRequest,
                 ActionResponse.class);
     }
@@ -944,7 +1004,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse unassignPrimaryIP(long id) {
         return post(
-                API_URL + "/primary_ips/" + id + "/actions/unassign",
+                apiUrl + "/primary_ips/" + id + "/actions/unassign",
                 ActionResponse.class);
     }
 
@@ -957,14 +1017,14 @@ public class HetznerCloudAPI {
      */
     public ActionResponse changePrimaryIPReverseDNS(long id, ChangeReverseDNSRequest changeReverseDNSRequest) {
         return post(
-                API_URL + "/primary_ips/" + id + "/actions/change_dns_ptr",
+                apiUrl + "/primary_ips/" + id + "/actions/change_dns_ptr",
                 changeReverseDNSRequest,
                 ActionResponse.class);
     }
 
     public ActionResponse changePrimaryIPProtection(long id, ChangeProtectionRequest changeProtectionRequest) {
         return post(
-                API_URL + "/primary_ips/" + id + "/actions/change_protection",
+                apiUrl + "/primary_ips/" + id + "/actions/change_protection",
                 changeProtectionRequest,
                 ActionResponse.class);
     }
@@ -977,7 +1037,7 @@ public class HetznerCloudAPI {
      */
     public String deletePrimaryIP(Long id) {
         return delete(
-                API_URL + "/primary_ips/" + id,
+                apiUrl + "/primary_ips/" + id,
                 String.class);
     }
 
@@ -1021,7 +1081,7 @@ public class HetznerCloudAPI {
      */
     public FloatingIPsResponse getFloatingIPs(String labelSelector, PaginationParameters paginationParameters) {
         return get(
-                UrlBuilder.from(API_URL + "/floating_ips")
+                UrlBuilder.from(apiUrl + "/floating_ips")
                         .queryParamIfPresent("label_selector", Optional.ofNullable(labelSelector))
                         .queryParamIfPresent("page", Optional.ofNullable(paginationParameters.page))
                         .queryParamIfPresent("per_page", Optional.ofNullable(paginationParameters.perPage))
@@ -1037,7 +1097,7 @@ public class HetznerCloudAPI {
      */
     public FloatingIPResponse getFloatingIP(long id) {
         return get(
-                API_URL + "/floating_ips/" + id,
+                apiUrl + "/floating_ips/" + id,
                 FloatingIPResponse.class);
     }
 
@@ -1049,7 +1109,7 @@ public class HetznerCloudAPI {
      */
     public CreateFloatingIPResponse createFloatingIP(CreateFloatingIPRequest createFloatingIPRequest) {
         return post(
-                API_URL + "/floating_ips",
+                apiUrl + "/floating_ips",
                 createFloatingIPRequest,
                 CreateFloatingIPResponse.class);
     }
@@ -1063,7 +1123,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse changeFloatingIPProtection(long id, ChangeProtectionRequest protectionRequest) {
         return post(
-                API_URL + "/floating_ips/" + id + "/actions/change_protection",
+                apiUrl + "/floating_ips/" + id + "/actions/change_protection",
                 protectionRequest,
                 ActionResponse.class);
     }
@@ -1077,7 +1137,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse assignFloatingIP(long id, AssignFloatingIPRequest assignFloatingIPRequest) {
         return post(
-                API_URL + "/floating_ips/" + id + "/actions/assign",
+                apiUrl + "/floating_ips/" + id + "/actions/assign",
                 assignFloatingIPRequest,
                 ActionResponse.class);
     }
@@ -1090,7 +1150,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse unassignFloatingIP(long id) {
         return post(
-                API_URL + "/floating_ips/" + id + "/actions/unassign",
+                apiUrl + "/floating_ips/" + id + "/actions/unassign",
                 ActionResponse.class);
     }
 
@@ -1103,7 +1163,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse changeFloatingReverseDNS(long id, ChangeReverseDNSRequest changeReverseDNSRequest) {
         return post(
-                API_URL + "/floating_ips/" + id + "/actions/change_dns_ptr",
+                apiUrl + "/floating_ips/" + id + "/actions/change_dns_ptr",
                 changeReverseDNSRequest,
                 ActionResponse.class);
     }
@@ -1118,7 +1178,7 @@ public class HetznerCloudAPI {
      */
     public String deleteFloatingIP(long id) {
         return delete(
-                API_URL + "/floating_ips/" + id,
+                apiUrl + "/floating_ips/" + id,
                 String.class);
     }
 
@@ -1131,7 +1191,7 @@ public class HetznerCloudAPI {
      */
     public CreateFloatingIPResponse updateFloatingIP(long id, UpdateFloatingIPRequest updateFloatingIPRequest) {
         return put(
-                API_URL + "/floating_ips/" + id,
+                apiUrl + "/floating_ips/" + id,
                 updateFloatingIPRequest,
                 CreateFloatingIPResponse.class);
     }
@@ -1174,7 +1234,7 @@ public class HetznerCloudAPI {
      */
     public SSHKeysResponse getSSHKeys(String labelSelector, PaginationParameters paginationParameters) {
         return get(
-                UrlBuilder.from(API_URL + "/ssh_keys")
+                UrlBuilder.from(apiUrl + "/ssh_keys")
                         .queryParamIfPresent("label_selector", Optional.ofNullable(labelSelector))
                         .queryParamIfPresent("page", Optional.ofNullable(paginationParameters.page))
                         .queryParamIfPresent("per_page", Optional.ofNullable(paginationParameters.perPage))
@@ -1190,7 +1250,7 @@ public class HetznerCloudAPI {
      */
     public SSHKeyResponse getSSHKey(long id) {
         return get(
-                API_URL + "/ssh_keys/" + id,
+                apiUrl + "/ssh_keys/" + id,
                 SSHKeyResponse.class);
     }
 
@@ -1202,7 +1262,7 @@ public class HetznerCloudAPI {
      */
     public SSHKeysResponse getSSHKey(String name) {
         return get(
-                UrlBuilder.from(API_URL + "/ssh_keys")
+                UrlBuilder.from(apiUrl + "/ssh_keys")
                         .queryParam("name", name)
                         .toUri(),
                 SSHKeysResponse.class);
@@ -1216,7 +1276,7 @@ public class HetznerCloudAPI {
      */
     public SSHKeysResponse getSSHKeyByFingerprint(String fingerprint) {
         return get(
-                UrlBuilder.from(API_URL + "/ssh_keys")
+                UrlBuilder.from(apiUrl + "/ssh_keys")
                         .queryParam("fingerprint", fingerprint)
                         .toUri(),
                 SSHKeysResponse.class);
@@ -1230,7 +1290,7 @@ public class HetznerCloudAPI {
      */
     public SSHKeyResponse createSSHKey(CreateSSHKeyRequest createSshKeyRequest) {
         return post(
-                API_URL + "/ssh_keys",
+                apiUrl + "/ssh_keys",
                 createSshKeyRequest,
                 SSHKeyResponse.class);
     }
@@ -1244,7 +1304,7 @@ public class HetznerCloudAPI {
      */
     public SSHKeyResponse updateSSHKey(long id, UpdateSSHKeyRequest updateSSHKeyRequest) {
         return put(
-                API_URL + "/ssh_keys/" + id,
+                apiUrl + "/ssh_keys/" + id,
                 updateSSHKeyRequest,
                 SSHKeyResponse.class);
     }
@@ -1259,7 +1319,7 @@ public class HetznerCloudAPI {
      */
     public String deleteSSHKey(long id) {
         return delete(
-                API_URL + "/ssh_keys/" + id,
+                apiUrl + "/ssh_keys/" + id,
                 String.class);
     }
 
@@ -1270,7 +1330,7 @@ public class HetznerCloudAPI {
      */
     public ServerTypesResponse getServerTypes() {
         return get(
-                API_URL + "/server_types",
+                apiUrl + "/server_types",
                 ServerTypesResponse.class);
     }
 
@@ -1281,7 +1341,7 @@ public class HetznerCloudAPI {
      */
     public ServerTypesResponse getServerTypes(PaginationParameters paginationParameters) {
         return get(
-                UrlBuilder.from(API_URL + "/server_types")
+                UrlBuilder.from(apiUrl + "/server_types")
                         .queryParamIfPresent("page", Optional.ofNullable(paginationParameters.page))
                         .queryParamIfPresent("per_page", Optional.ofNullable(paginationParameters.perPage))
                         .toUri(),
@@ -1295,7 +1355,7 @@ public class HetznerCloudAPI {
      */
     public LoadBalancerTypesResponse getLoadBalancerTypes() {
         return get(
-                API_URL + "/load_balancer_types",
+                apiUrl + "/load_balancer_types",
                 LoadBalancerTypesResponse.class);
     }
 
@@ -1307,7 +1367,7 @@ public class HetznerCloudAPI {
      */
     public LoadBalancerTypesResponse getLoadBalancerTypeByName(String name) {
         return get(
-                UrlBuilder.from(API_URL + "/load_balancer_types")
+                UrlBuilder.from(apiUrl + "/load_balancer_types")
                         .queryParam("name", name)
                         .toUri(),
                 LoadBalancerTypesResponse.class);
@@ -1320,7 +1380,7 @@ public class HetznerCloudAPI {
      * @return LoadBalancerTypeResponse
      */
     public LoadBalancerTypeResponse getLoadBalancerType(long id) {
-        return get(String.format("%s/load_balancer_types/%s", API_URL, id), LoadBalancerTypeResponse.class);
+        return get(String.format("%s/load_balancer_types/%s", apiUrl, id), LoadBalancerTypeResponse.class);
     }
 
     /**
@@ -1331,7 +1391,7 @@ public class HetznerCloudAPI {
      */
     public ServerTypesResponse getServerTypeByName(String name) {
         return get(
-                UrlBuilder.from(API_URL + "/server_types")
+                UrlBuilder.from(apiUrl + "/server_types")
                         .queryParam("name", name)
                         .toUri(),
                 ServerTypesResponse.class);
@@ -1345,7 +1405,7 @@ public class HetznerCloudAPI {
      */
     public ServerTypeResponse getServerType(long id) {
         return get(
-                API_URL + "/server_types/" + id,
+                apiUrl + "/server_types/" + id,
                 ServerTypeResponse.class);
     }
 
@@ -1356,7 +1416,7 @@ public class HetznerCloudAPI {
      */
     public LocationsResponse getLocations() {
         return get(
-                API_URL + "/locations",
+                apiUrl + "/locations",
                 LocationsResponse.class);
     }
 
@@ -1368,7 +1428,7 @@ public class HetznerCloudAPI {
      */
     public LocationsResponse getLocationByName(String name) {
         return get(
-                UrlBuilder.from(API_URL + "/locations")
+                UrlBuilder.from(apiUrl + "/locations")
                         .queryParam("name", name)
                         .toUri(),
                 LocationsResponse.class);
@@ -1382,7 +1442,7 @@ public class HetznerCloudAPI {
      */
     public LocationResponse getLocation(long id) {
         return get(
-                API_URL + "/locations/" + id,
+                apiUrl + "/locations/" + id,
                 LocationResponse.class);
     }
 
@@ -1458,7 +1518,7 @@ public class HetznerCloudAPI {
      */
     public ImagesResponse getImages(String labelSelector, Architecture architecture, PaginationParameters paginationParameters) {
         return get(
-                UrlBuilder.from(API_URL + "/images")
+                UrlBuilder.from(apiUrl + "/images")
                         .queryParamIfPresent("label_selector", Optional.ofNullable(labelSelector))
                         .queryParamIfPresent("architecture", Optional.ofNullable(architecture))
                         .queryParamIfPresent("page", Optional.ofNullable(paginationParameters.page))
@@ -1486,7 +1546,7 @@ public class HetznerCloudAPI {
      */
     public ImagesResponse getImagesByType(ImageType type, PaginationParameters paginationParameters) {
         return get(
-                UrlBuilder.from(API_URL + "/images")
+                UrlBuilder.from(apiUrl + "/images")
                         .queryParam("type", type.toString())
                         .queryParamIfPresent("page", Optional.ofNullable(paginationParameters.page))
                         .queryParamIfPresent("per_page", Optional.ofNullable(paginationParameters.perPage))
@@ -1502,7 +1562,9 @@ public class HetznerCloudAPI {
      */
     public ImagesResponse getImageByName(String name) {
         return get(
-                API_URL + "/images?name=" + name,
+                UrlBuilder.from(apiUrl + "/images")
+                        .queryParam("name", name)
+                        .toUri(),
                 ImagesResponse.class);
     }
 
@@ -1514,7 +1576,7 @@ public class HetznerCloudAPI {
      */
     public ImageResponse getImage(long id) {
         return get(
-                API_URL + "/images/" + id,
+                apiUrl + "/images/" + id,
                 ImageResponse.class);
     }
 
@@ -1527,7 +1589,7 @@ public class HetznerCloudAPI {
      */
     public ImageResponse updateImage(long id, UpdateImageRequest updateImageRequest) {
         return put(
-                API_URL + "/images/" + id,
+                apiUrl + "/images/" + id,
                 updateImageRequest,
                 ImageResponse.class);
     }
@@ -1542,7 +1604,7 @@ public class HetznerCloudAPI {
      */
     public String deleteImage(long id) {
         return delete(
-                API_URL + "/images/" + id,
+                apiUrl + "/images/" + id,
                 String.class);
     }
 
@@ -1584,7 +1646,7 @@ public class HetznerCloudAPI {
      */
     public VolumesResponse getVolumes(String labelSelector, PaginationParameters paginationParameters) {
         return get(
-                UrlBuilder.from(API_URL + "/volumes")
+                UrlBuilder.from(apiUrl + "/volumes")
                         .queryParamIfPresent("label_selector", Optional.ofNullable(labelSelector))
                         .queryParamIfPresent("page", Optional.ofNullable(paginationParameters.page))
                         .queryParamIfPresent("per_page", Optional.ofNullable(paginationParameters.perPage))
@@ -1600,7 +1662,7 @@ public class HetznerCloudAPI {
      */
     public VolumeResponse getVolume(long id) {
         return get(
-                API_URL + "/volumes/" + id,
+                apiUrl + "/volumes/" + id,
                 VolumeResponse.class);
     }
 
@@ -1614,7 +1676,7 @@ public class HetznerCloudAPI {
         if ((createVolumeRequest.getFormat() != null))
             createVolumeRequest.setFormat(createVolumeRequest.getFormat().toLowerCase());   // case-sensitive fix
         return post(
-                API_URL + "/volumes",
+                apiUrl + "/volumes",
                 createVolumeRequest,
                 CreateVolumeResponse.class);
     }
@@ -1628,7 +1690,7 @@ public class HetznerCloudAPI {
      */
     public VolumeResponse updateVolume(long id, UpdateVolumeRequest updateVolumeRequest) {
         return put(
-                API_URL + "/volumes/" + id,
+                apiUrl + "/volumes/" + id,
                 updateVolumeRequest,
                 VolumeResponse.class);
     }
@@ -1641,7 +1703,7 @@ public class HetznerCloudAPI {
      */
     public String deleteVolume(long id) {
         return delete(
-                API_URL + "/volumes/" + id,
+                apiUrl + "/volumes/" + id,
                 String.class);
     }
 
@@ -1653,7 +1715,7 @@ public class HetznerCloudAPI {
      */
     public ActionsResponse getVolumeActions(long id) {
         return get(
-                API_URL + "/volumes/" + id + "/actions",
+                apiUrl + "/volumes/" + id + "/actions",
                 ActionsResponse.class);
     }
 
@@ -1666,7 +1728,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse attachVolumeToServer(long id, AttachVolumeRequest attachVolumeRequest) {
         return post(
-                API_URL + "/volumes/" + id + "/actions/attach",
+                apiUrl + "/volumes/" + id + "/actions/attach",
                 attachVolumeRequest,
                 ActionResponse.class);
     }
@@ -1679,7 +1741,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse detachVolume(long id) {
         return post(
-                API_URL + "/volumes/" + id + "/actions/detach",
+                apiUrl + "/volumes/" + id + "/actions/detach",
                 ActionResponse.class);
     }
 
@@ -1693,7 +1755,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse resizeVolume(long id, ResizeVolumeRequest resizeVolumeRequest) {
         return post(
-                API_URL + "/volumes/" + id + "/actions/resize",
+                apiUrl + "/volumes/" + id + "/actions/resize",
                 resizeVolumeRequest,
                 ActionResponse.class);
     }
@@ -1708,7 +1770,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse changeVolumeProtection(long id, ChangeProtectionRequest changeProtectionRequest) {
         return post(
-                API_URL + "/volumes/" + id + "/actions/change_protection",
+                apiUrl + "/volumes/" + id + "/actions/change_protection",
                 changeProtectionRequest,
                 ActionResponse.class);
     }
@@ -1751,7 +1813,7 @@ public class HetznerCloudAPI {
      */
     public NetworksResponse getNetworks(String labelSelector, PaginationParameters paginationParameters) {
         return get(
-                UrlBuilder.from(API_URL + "/networks")
+                UrlBuilder.from(apiUrl + "/networks")
                         .queryParamIfPresent("label_selector", Optional.ofNullable(labelSelector))
                         .queryParamIfPresent("page", Optional.ofNullable(paginationParameters.page))
                         .queryParamIfPresent("per_page", Optional.ofNullable(paginationParameters.perPage))
@@ -1767,7 +1829,9 @@ public class HetznerCloudAPI {
      */
     public NetworksResponse getNetworksByName(String name) {
         return get(
-                API_URL + "/networks?name=" + name,
+                UrlBuilder.from(apiUrl + "/networks")
+                        .queryParam("name", name)
+                        .toUri(),
                 NetworksResponse.class);
     }
 
@@ -1779,7 +1843,7 @@ public class HetznerCloudAPI {
      */
     public NetworkResponse getNetwork(long id) {
         return get(
-                API_URL + "/networks/" + id,
+                apiUrl + "/networks/" + id,
                 NetworkResponse.class);
     }
 
@@ -1792,7 +1856,7 @@ public class HetznerCloudAPI {
      */
     public NetworkResponse updateNetwork(long id, UpdateNetworkRequest updateNetworkRequest) {
         return put(
-                API_URL + "/networks/" + id,
+                apiUrl + "/networks/" + id,
                 updateNetworkRequest,
                 NetworkResponse.class);
     }
@@ -1806,7 +1870,7 @@ public class HetznerCloudAPI {
      */
     public NetworkResponse createNetwork(CreateNetworkRequest createNetworkRequest) {
         return post(
-                API_URL + "/networks",
+                apiUrl + "/networks",
                 createNetworkRequest,
                 NetworkResponse.class);
     }
@@ -1819,7 +1883,7 @@ public class HetznerCloudAPI {
      */
     public String deleteNetwork(long id) {
         return delete(
-                API_URL + "/networks/" + id,
+                apiUrl + "/networks/" + id,
                 String.class);
     }
 
@@ -1832,7 +1896,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse attachServerToNetwork(long id, AttachServerToNetworkRequest attachServerToNetworkRequest) {
         return post(
-                API_URL + "/servers/" + id + "/actions/attach_to_network",
+                apiUrl + "/servers/" + id + "/actions/attach_to_network",
                 attachServerToNetworkRequest,
                 ActionResponse.class);
     }
@@ -1847,7 +1911,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse detachServerFromNetwork(long id, DetachServerFromNetworkRequest detachServerFromNetworkRequest) {
         return post(
-                API_URL + "/servers/" + id + "/actions/detach_from_network",
+                apiUrl + "/servers/" + id + "/actions/detach_from_network",
                 detachServerFromNetworkRequest,
                 ActionResponse.class);
     }
@@ -1861,7 +1925,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse changeAliasIPsOfNetwork(long id, ChangeAliasIPsofNetworkRequest changeAliasIPsofNetworkRequest) {
         return post(
-                API_URL + "/servers/" + id + "/actions/change_alias_ips",
+                apiUrl + "/servers/" + id + "/actions/change_alias_ips",
                 changeAliasIPsofNetworkRequest,
                 ActionResponse.class);
     }
@@ -1875,7 +1939,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse changeNetworkProtection(long id, ChangeProtectionRequest changeProtection) {
         return post(
-                API_URL + "/networks/" + id + "/actions/change_protection",
+                apiUrl + "/networks/" + id + "/actions/change_protection",
                 changeProtection,
                 ActionResponse.class);
     }
@@ -1888,7 +1952,7 @@ public class HetznerCloudAPI {
      */
     public ActionsResponse getNetworkActions(long id) {
         return get(
-                API_URL + "/networks/" + id + "/actions",
+                apiUrl + "/networks/" + id + "/actions",
                 ActionsResponse.class);
     }
 
@@ -1901,7 +1965,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse addSubnetToNetwork(long id, AddSubnetToNetworkRequest addSubnetToNetworkRequest) {
         return post(
-                API_URL + "/networks/" + id + "/actions/add_subnet",
+                apiUrl + "/networks/" + id + "/actions/add_subnet",
                 addSubnetToNetworkRequest,
                 ActionResponse.class);
     }
@@ -1915,7 +1979,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse deleteSubnetFromNetwork(long id, DeleteSubnetFromNetwork deleteSubnetFromNetwork) {
         return post(
-                API_URL + "/networks/" + id + "/actions/delete_subnet",
+                apiUrl + "/networks/" + id + "/actions/delete_subnet",
                 deleteSubnetFromNetwork,
                 ActionResponse.class);
     }
@@ -1929,7 +1993,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse addRouteToNetwork(long id, NetworkRouteRequest networkRouteRequest) {
         return post(
-                API_URL + "/networks/" + id + "/actions/add_route",
+                apiUrl + "/networks/" + id + "/actions/add_route",
                 networkRouteRequest,
                 ActionResponse.class);
     }
@@ -1943,7 +2007,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse deleteRouteFromNetwork(long id, NetworkRouteRequest networkRouteRequest) {
         return post(
-                API_URL + "/networks/" + id + "/actions/delete_route",
+                apiUrl + "/networks/" + id + "/actions/delete_route",
                 networkRouteRequest,
                 ActionResponse.class);
     }
@@ -1958,7 +2022,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse changeIPRangeOfNetwork(long id, ChangeIPRangeOfNetwork changeIPRangeOfNetwork) {
         return post(
-                API_URL + "/networks/" + id + "/actions/change_ip_range",
+                apiUrl + "/networks/" + id + "/actions/change_ip_range",
                 changeIPRangeOfNetwork,
                 ActionResponse.class);
     }
@@ -1980,7 +2044,7 @@ public class HetznerCloudAPI {
      */
     public CertificatesResponse getCertificates(PaginationParameters paginationParameters) {
         return get(
-                UrlBuilder.from(API_URL + "/certificates")
+                UrlBuilder.from(apiUrl + "/certificates")
                         .queryParamIfPresent("page", Optional.ofNullable(paginationParameters.page))
                         .queryParamIfPresent("per_page", Optional.ofNullable(paginationParameters.perPage))
                         .toUri(),
@@ -2008,7 +2072,7 @@ public class HetznerCloudAPI {
      */
     public CertificatesResponse getCertificates(String labelSelector, PaginationParameters paginationParameters) {
         return get(
-                UrlBuilder.from(API_URL + "/certificates")
+                UrlBuilder.from(apiUrl + "/certificates")
                         .queryParam("label_selector", labelSelector)
                         .queryParamIfPresent("page", Optional.ofNullable(paginationParameters.page))
                         .queryParamIfPresent("per_page", Optional.ofNullable(paginationParameters.perPage))
@@ -2024,7 +2088,7 @@ public class HetznerCloudAPI {
      */
     public CertificatesResponse getCertificate(String name) {
         return get(
-                UrlBuilder.from(API_URL + "/certificates")
+                UrlBuilder.from(apiUrl + "/certificates")
                         .queryParam("name", name)
                         .toUri(),
                 CertificatesResponse.class);
@@ -2038,7 +2102,7 @@ public class HetznerCloudAPI {
      */
     public CertificateResponse getCertificate(long id) {
         return get(
-                API_URL + "/certificates/" + id,
+                apiUrl + "/certificates/" + id,
                 CertificateResponse.class);
     }
 
@@ -2050,7 +2114,7 @@ public class HetznerCloudAPI {
      */
     public CertificateResponse createCertificate(CreateCertificateRequest createCertificateRequest) {
         return post(
-                API_URL + "/certificates",
+                apiUrl + "/certificates",
                 createCertificateRequest,
                 CertificateResponse.class);
     }
@@ -2068,7 +2132,7 @@ public class HetznerCloudAPI {
      */
     public CertificateResponse updateCertificate(long id, UpdateCertificateRequest updateCertificateRequest) {
         return put(
-                API_URL + "/certificates/" + id,
+                apiUrl + "/certificates/" + id,
                 updateCertificateRequest,
                 CertificateResponse.class);
     }
@@ -2084,7 +2148,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse retryCertificate(long id) {
         return post(
-                API_URL + "/certificates/" + id + "/actions/retry",
+                apiUrl + "/certificates/" + id + "/actions/retry",
                 ActionResponse.class);
     }
 
@@ -2096,7 +2160,7 @@ public class HetznerCloudAPI {
      */
     public String deleteCertificate(long id) {
         return delete(
-                API_URL + "/certificates/" + id,
+                apiUrl + "/certificates/" + id,
                 String.class);
     }
 
@@ -2116,7 +2180,7 @@ public class HetznerCloudAPI {
      */
     public LoadBalancersResponse getLoadBalancerByName(String name) {
         return get(
-            UrlBuilder.from(API_URL + "/load_balancers")
+            UrlBuilder.from(apiUrl + "/load_balancers")
                     .queryParam("name", name)
                     .toUri(),
             LoadBalancersResponse.class);
@@ -2141,7 +2205,7 @@ public class HetznerCloudAPI {
      */
     public LoadBalancersResponse getLoadBalancers(String labelSelector, PaginationParameters paginationParameters) {
         return get(
-                UrlBuilder.from(API_URL + "/load_balancers")
+                UrlBuilder.from(apiUrl + "/load_balancers")
                         .queryParamIfPresent("label_selector", Optional.ofNullable(labelSelector))
                         .queryParamIfPresent("page", Optional.ofNullable(paginationParameters.page))
                         .queryParamIfPresent("per_page", Optional.ofNullable(paginationParameters.perPage))
@@ -2157,7 +2221,7 @@ public class HetznerCloudAPI {
      */
     public LoadBalancerResponse getLoadBalancer(long id) {
         return get(
-                API_URL + "/load_balancers/" + id,
+                apiUrl + "/load_balancers/" + id,
                 LoadBalancerResponse.class);
     }
 
@@ -2169,7 +2233,7 @@ public class HetznerCloudAPI {
      */
     public LoadBalancerResponse createLoadBalancer(CreateLoadBalancerRequest createLoadBalancerRequest) {
         return post(
-                API_URL + "/load_balancers",
+                apiUrl + "/load_balancers",
                 createLoadBalancerRequest,
                 LoadBalancerResponse.class);
     }
@@ -2183,7 +2247,7 @@ public class HetznerCloudAPI {
      */
     public LoadBalancerResponse updateLoadBalancer(long id, UpdateLoadBalancerRequest updateLoadBalancerRequest) {
         return put(
-                API_URL + "/load_balancers/" + id,
+                apiUrl + "/load_balancers/" + id,
                 updateLoadBalancerRequest,
                 LoadBalancerResponse.class);
     }
@@ -2196,7 +2260,7 @@ public class HetznerCloudAPI {
      */
     public String deleteLoadBalancer(long id) {
         return delete(
-                API_URL + "/load_balancers/" + id,
+                apiUrl + "/load_balancers/" + id,
                 String.class);
     }
 
@@ -2208,7 +2272,7 @@ public class HetznerCloudAPI {
      */
     public ActionsResponse getLoadBalancerActions(long id) {
         return get(
-                API_URL + "/load_balancers/" + id + "/actions",
+                apiUrl + "/load_balancers/" + id + "/actions",
                 ActionsResponse.class);
     }
 
@@ -2221,7 +2285,7 @@ public class HetznerCloudAPI {
      */
     public LoadBalancerResponse addServiceToLoadBalancer(long id, LBServiceRequest lbServiceRequest) {
         return post(
-                API_URL + "/load_balancers/" + id + "/actions/add_service",
+                apiUrl + "/load_balancers/" + id + "/actions/add_service",
                 lbServiceRequest,
                 LoadBalancerResponse.class);
     }
@@ -2235,7 +2299,7 @@ public class HetznerCloudAPI {
      */
     public LoadBalancerResponse updateServiceOfLoadBalancer(long id, LBServiceRequest lbServiceRequest) {
         return post(
-                API_URL + "/load_balancers/" + id + "/actions/update_service",
+                apiUrl + "/load_balancers/" + id + "/actions/update_service",
                 lbServiceRequest,
                 LoadBalancerResponse.class);
     }
@@ -2249,7 +2313,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse deleteServiceOfLoadBalancer(long id, long listenPort) {
         return post(
-                API_URL + "/load_balancers/" + id + "/actions/delete_service",
+                apiUrl + "/load_balancers/" + id + "/actions/delete_service",
                 new LoadBalancerDeleteServiceRequest(listenPort),
                 ActionResponse.class);
     }
@@ -2263,7 +2327,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse addTargetToLoadBalancer(long id, LBTargetRequest lbTargetRequest) {
         return post(
-                API_URL + "/load_balancers/" + id + "/actions/add_target",
+                apiUrl + "/load_balancers/" + id + "/actions/add_target",
                 lbTargetRequest,
                 ActionResponse.class);
     }
@@ -2277,7 +2341,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse removeTargetFromLoadBalancer(long id, LBTargetRequest lbTargetRequest) {
         return post(
-                API_URL + "/load_balancers/" + id + "/actions/remove_target",
+                apiUrl + "/load_balancers/" + id + "/actions/remove_target",
                 lbTargetRequest,
                 ActionResponse.class);
     }
@@ -2291,7 +2355,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse changeAlgorithmOfLoadBalancer(long id, String algorithmType) {
         return post(
-                API_URL + "/load_balancers/" + id + "/actions/change_algorithm",
+                apiUrl + "/load_balancers/" + id + "/actions/change_algorithm",
                 new LoadBalancerChangeAlgorithmRequest(algorithmType),
                 ActionResponse.class);
     }
@@ -2306,7 +2370,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse changeTypeOfLoadBalancer(long id, String loadBalancerType) {
         return post(
-                API_URL + "/load_balancers/" + id + "/actions/change_type",
+                apiUrl + "/load_balancers/" + id + "/actions/change_type",
                 new LoadBalancerChangeTypeRequest(loadBalancerType),
                 ActionResponse.class);
     }
@@ -2349,7 +2413,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse detachNetworkFromLoadBalancer(long id, long networkId) {
         return post(
-                API_URL + "/load_balancers/" + id + "/actions/detach_from_network",
+                apiUrl + "/load_balancers/" + id + "/actions/detach_from_network",
                 new LoadBalancerNetworkRequest(networkId),
                 ActionResponse.class);
     }
@@ -2362,7 +2426,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse enablePublicInterfaceOfLoadBalancer(long id) {
         return post(
-                API_URL + "/load_balancers/" + id + "/actions/enable_public_interface",
+                apiUrl + "/load_balancers/" + id + "/actions/enable_public_interface",
                 ActionResponse.class);
     }
 
@@ -2374,7 +2438,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse disablePublicInterfaceOfLoadBalancer(long id) {
         return post(
-                API_URL + "/load_balancers/" + id + "/actions/disable_public_interface",
+                apiUrl + "/load_balancers/" + id + "/actions/disable_public_interface",
 
                 ActionResponse.class);
     }
@@ -2388,7 +2452,7 @@ public class HetznerCloudAPI {
      */
     public ActionResponse changeProtectionOfLoadBalancer(long id, boolean delete) {
         return post(
-                API_URL + "/load_balancers/" + id + "/actions/change_protection",
+                apiUrl + "/load_balancers/" + id + "/actions/change_protection",
                 new LoadBalancerChangeProtectionRequest(delete),
                 ActionResponse.class);
     }
@@ -2401,7 +2465,7 @@ public class HetznerCloudAPI {
      */
     public PlacementGroupResponse getPlacementGroup(long id) {
         return get(
-                API_URL + "/placement_groups/" + id,
+                apiUrl + "/placement_groups/" + id,
                 PlacementGroupResponse.class);
     }
 
@@ -2422,7 +2486,7 @@ public class HetznerCloudAPI {
      */
     public PlacementGroupsResponse getPlacementGroups(PaginationParameters paginationParameters) {
         return get(
-                UrlBuilder.from(API_URL + "/placement_groups")
+                UrlBuilder.from(apiUrl + "/placement_groups")
                         .queryParamIfPresent("page", Optional.ofNullable(paginationParameters.page))
                         .queryParamIfPresent("per_page", Optional.ofNullable(paginationParameters.perPage))
                         .toUri(),
@@ -2436,7 +2500,7 @@ public class HetznerCloudAPI {
      * @return PlacementGroupsResponse
      */
     public PlacementGroupsResponse getPlacementGroup(String name) {
-        UrlBuilder builder = UrlBuilder.from(API_URL + "/placement_groups")
+        UrlBuilder builder = UrlBuilder.from(apiUrl + "/placement_groups")
                 .queryParam("name", name);
 
         return get(
@@ -2451,7 +2515,7 @@ public class HetznerCloudAPI {
      * @return PlacementGroupsResponse
      */
     public PlacementGroupsResponse getPlacementGroups(String labelSelector) {
-        UrlBuilder builder = UrlBuilder.from(API_URL + "/placement_groups")
+        UrlBuilder builder = UrlBuilder.from(apiUrl + "/placement_groups")
                 .queryParam("label_selector", labelSelector);
 
         return get(
@@ -2467,7 +2531,7 @@ public class HetznerCloudAPI {
      */
     public PlacementGroupsResponse getPlacementGroup(PlacementGroupType type) {
         return get(
-                UrlBuilder.from(API_URL + "/placement_groups").queryParam("type", type.toString()).toUri(),
+                UrlBuilder.from(apiUrl + "/placement_groups").queryParam("type", type.toString()).toUri(),
                 PlacementGroupsResponse.class);
     }
 
@@ -2479,7 +2543,7 @@ public class HetznerCloudAPI {
      */
     public PlacementGroupResponse createPlacementGroup(CreatePlacementGroupRequest placementGroupRequest) {
         return post(
-                API_URL + "/placement_groups",
+                apiUrl + "/placement_groups",
                 placementGroupRequest,
                 PlacementGroupResponse.class);
     }
@@ -2492,7 +2556,7 @@ public class HetznerCloudAPI {
      */
     public String deletePlacementGroup(long id) {
         return delete(
-                API_URL + "/placement_groups/" + id,
+                apiUrl + "/placement_groups/" + id,
                 String.class);
     }
 
@@ -2506,6 +2570,20 @@ public class HetznerCloudAPI {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         return dateFormat.format(date);
+    }
+
+    private void validateStorageBoxApiUsage() {
+        if (!apiUrl.contains("api.hetzner.com") && !isTestMode()) {
+            throw new IllegalStateException("Storage Box methods can only be used with APIType.HETZNER_ONLINE. " +
+                    "Please create the API instance with: new HetznerCloudAPI(token, APIType.HETZNER_ONLINE)");
+        }
+    }
+
+    private boolean isTestMode() {
+        // Check if we're in test mode by looking for test-related URL patterns or system properties
+        return apiUrl.contains("localhost") ||
+               apiUrl.contains("127.0.0.1") ||
+               "test".equals(System.getProperty("hetzner.test.mode"));
     }
 
     private <T> T exchange(String url, HttpMethod method, Object body, Class<T> clazz) {
