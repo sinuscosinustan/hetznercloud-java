@@ -17,9 +17,21 @@ public class ServerType {
     private Long cores;
     private Long memory;
     private Long disk;
+
+    /**
+     * @deprecated Use the per-location deprecation information in the locations array instead.
+     * This field will be gradually phased out as per-location deprecations are being announced.
+     */
     @Deprecated
     private Boolean deprecated;
+
+    /**
+     * @deprecated Use the per-location deprecation information in the locations array instead.
+     * This field will be gradually phased out as per-location deprecations are being announced.
+     */
+    @Deprecated
     private Deprecation deprecation;
+
     private List<LocationPrice> prices;
     @JsonProperty("storage_type")
     private String storageType;
@@ -28,4 +40,6 @@ public class ServerType {
     private Architecture architecture;
     @JsonProperty("included_traffic")
     private Long includedTraffic;
+    private String category;
+    private List<ServerTypeLocation> locations;
 }

@@ -3,6 +3,7 @@
     * runtime: bump java requirement to jdk 17
     * api: send proper user-agent
     * api: add support for api.hetzner.com
+    * servertype: add locations and category attributes
 
 *Not released yet*
 
