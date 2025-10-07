@@ -1,4 +1,4 @@
-# For next release
+# Major Release v5.0.0 (2025-10-07)
   * **Tan Siewert**
     * runtime: bump java requirement to jdk 17
     * api: send proper user-agent
@@ -9,7 +9,7 @@
     * storagebox: add implementation
     * dns: add implementation
 
-*Not released yet*
+*Released by Tan Siewert <tan@siewert.io>*
 
 # Patch Release v4.0.1 (2025-02-10)
   * **Tan Siewert**

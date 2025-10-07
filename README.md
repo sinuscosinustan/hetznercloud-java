@@ -25,7 +25,7 @@ Dependency:
     <dependency>
         <groupId>io.github.sinuscosinustan</groupId>
         <artifactId>hetznercloud-api</artifactId>
-        <version>4.0.1</version>
+        <version>5.0.0</version>
     </dependency>
 </dependencies>
 ```
@@ -40,7 +40,7 @@ repositories {
 }
 
 dependencies {
-    implementation "io.github.sinuscosinustan:hetznercloud-api:4.0.1"
+    implementation "io.github.sinuscosinustan:hetznercloud-api:5.0.0"
 }
 ```
 
@@ -49,7 +49,7 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation("io.github.sinuscosinustan:hetznercloud-api:4.0.1")
+    implementation("io.github.sinuscosinustan:hetznercloud-api:5.0.0")
 }
 ```
 </details>
