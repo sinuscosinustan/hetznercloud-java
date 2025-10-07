@@ -8,3 +8,4 @@ io.github.sinuscosinustan.hetznercloud.objects.pricing
 io.github.sinuscosinustan.hetznercloud.objects.request
 io.github.sinuscosinustan.hetznercloud.objects.response
 io.github.sinuscosinustan.hetznercloud.serialize
+io.github.sinuscosinustan.hetznercloud.util
