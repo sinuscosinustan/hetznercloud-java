@@ -31,13 +31,11 @@ public class LoadBalancer {
     private String algorithmType;
 
     @JsonProperty("algorithm")
-    @SuppressWarnings("unchecked")
     private void algorithmDeserializer(Map<String, Object> algorithm) {
         this.algorithmType = (String) algorithm.get("type");
     }
 
     @JsonProperty("public_net")
-    @SuppressWarnings("unchecked")
     private void publicNetDeserializer(Map<String, Object> publicNet) {
         this.publicEnabled = (Boolean) publicNet.get("enabled");
         this.publicIpv4 = (String) ((Map) publicNet.get("ipv4")).get("ip");

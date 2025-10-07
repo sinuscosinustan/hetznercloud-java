@@ -1,3 +1,16 @@
+# For next release
+  * **Tan Siewert**
+    * runtime: bump java requirement to jdk 17
+    * api: send proper user-agent
+    * api: add support for api.hetzner.com
+    * servertype: add locations and category attributes
+    * loadbalancer: fix wrong mapping, add missing items
+    * loadbalancer: deprecate old network attachment methods
+    * storagebox: add implementation
+    * dns: add implementation
+
+*Not released yet*
+
 # Patch Release v4.0.1 (2025-02-10)
   * **Tan Siewert**
     * maven: fix deployment process

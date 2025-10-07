@@ -6,6 +6,7 @@ public enum APIErrorCode {
 
     //General error codes
     forbidden,
+    unauthorized,
     invalid_input,
     json_error,
     locked,
@@ -13,6 +14,7 @@ public enum APIErrorCode {
     rate_limit_exceeded,
     resource_limit_exceeded,
     resource_unavailable,
+    server_error,
     service_error,
     uniqueness_error,
     @JsonAlias("protected")
@@ -22,7 +24,10 @@ public enum APIErrorCode {
     unsupported_error,
     token_readonly,
     unavailable,
-    unauthorized,
+    deprecated_api_endpoint,
+    timeout,
+    method_not_allowed,
+    internal_server_error,
 
     //Certificate related
     caa_record_does_not_allow_ca,
@@ -63,8 +68,7 @@ public enum APIErrorCode {
     server_has_ipv6,
     primary_ip_already_assigned,
     server_is_load_balancer_target,
-    server_error,
-    
+
     //Server related
     placement_error,
     primary_ip_assigned,

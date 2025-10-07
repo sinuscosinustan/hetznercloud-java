@@ -11,7 +11,7 @@ jobs:
   test:
     strategy:
       matrix:
-        version: [11, 17]
+        version: [17, 21]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,6 +22,9 @@ jobs:
           java-version: '${{ matrix.version }}'
           distribution: 'adopt'
           cache: maven
+
+      - name: Download API specs from Hetzner
+        run: mkdir -p build && curl -o build/hetzner.spec.json https://docs.hetzner.cloud/hetzner.spec.json && curl -o build/cloud.spec.json https://docs.hetzner.cloud/cloud.spec.json
 
       - name: Test
         run: mvn --batch-mode -Dgpg.skip=true test

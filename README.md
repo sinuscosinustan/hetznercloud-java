@@ -54,14 +54,43 @@ dependencies {
 ```
 </details>
 
+## Requirements
+
+- Java 17 or higher
+- Maven 3.6.0 or higher
+
 ## How to run tests
-The tests need an API Token for the Hetzner Cloud. The API token has to be set as an environment variable called `HCLOUD_TOKEN`.
+
+This project has unit tests, as well as integration tests.
+
+### Unit Tests (Default)
+```bash
+mvn test
+```
+
+### Integration Tests
+Integration tests require an API Token for the Hetzner Cloud. Set the API token as an environment variable called `HCLOUD_TOKEN`.
 
 To obtain an API key, please see [the official API documentation](https://docs.hetzner.cloud/#getting-started).
 
+```bash
+HCLOUD_TOKEN="${api_key}" mvn test -Pintegration-tests
 ```
-HCLOUD_TOKEN="${api_key}" mvn test
+
+### Code Quality
+
+#### Checkstyle
+Checkstyle runs automatically during compilation:
+```bash
+mvn compile
 ```
+
+#### Code Coverage (JaCoCo)
+Generate code coverage reports:
+```bash
+mvn test
+```
+View the HTML report at `target/site/jacoco/index.html`
 
 ## JavaDocs
 
