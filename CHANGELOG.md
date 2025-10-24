@@ -1,8 +1,8 @@
-# For next release
+# Patch Release v5.0.1 (2025-10-24)
   * **Tan Siewert**
     * server: add new SCO tariffs
 
-*Not released yet*
+*Released by Tan Siewert <tan@siewert.io>*
 
 # Major Release v5.0.0 (2025-10-07)
   * **Tan Siewert**
