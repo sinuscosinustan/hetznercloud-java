@@ -1,3 +1,9 @@
+# For next release
+  * **Tan Siewert**
+    * server: add new SCO tariffs
+
+*Not released yet*
+
 # Major Release v5.0.0 (2025-10-07)
   * **Tan Siewert**
     * runtime: bump java requirement to jdk 17
