@@ -123,7 +123,7 @@ class ServerManagementIntegrationTest {
         var createServer = hetznerCloudAPI.createServer(
                 CreateServerRequest.builder()
                         .name(serverName)
-                        .serverType(ServerType.cpx12.name())
+                        .serverType(ServerType.cpx22.name())
                         .publicNet(ServerPublicNetRequest.builder()
                                 .enableIPv4(false)
                                 .enableIPv6(true)
