@@ -47,7 +47,7 @@ class ServerManagementIntegrationTest {
 
             servers.forEach(server -> {
                 try {
-                    log.info("Cleaning up server: {}", server.getName());
+                    log.info("Cleaning up server: {} ({})", server.getName(), server.getId());
 
                     // Wait for any pending actions
                     var actions = hetznerCloudAPI.getServerActions(server.getId()).getActions();
@@ -63,7 +63,7 @@ class ServerManagementIntegrationTest {
                         }
                     });
 
-                    log.info("Deleting server '{}'", server.getName());
+                    log.info("Deleting server '{}' ({})", server.getName(), server.getId());
                     var deleteAction = hetznerCloudAPI.deleteServer(server.getId());
 
                     // Wait for server deletion to complete
@@ -123,7 +123,7 @@ class ServerManagementIntegrationTest {
         var createServer = hetznerCloudAPI.createServer(
                 CreateServerRequest.builder()
                         .name(serverName)
-                        .serverType(ServerType.cpx11.name())
+                        .serverType(ServerType.cpx22.name())
                         .publicNet(ServerPublicNetRequest.builder()
                                 .enableIPv4(false)
                                 .enableIPv6(true)
@@ -138,7 +138,9 @@ class ServerManagementIntegrationTest {
 
         // Wait for server creation to complete
         hetznerCloudAPI.getServerActions(createServer.getServer().getId()).getActions().forEach(action -> {
-            Awaitility.await().until(() -> hetznerCloudAPI.getAction(action.getId()).getAction().getFinished() != null);
+            Awaitility.await()
+              .atMost(Duration.ofSeconds(30))
+              .until(() -> hetznerCloudAPI.getAction(action.getId()).getAction().getFinished() != null);
         });
 
         // Test server operations
