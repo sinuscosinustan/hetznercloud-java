@@ -56,7 +56,7 @@ jobs:
         run: mvn --batch-mode -Dgpg.skip=true javadoc:javadoc
 
       - name: Deploy to gh-pages
-        uses: JamesIves/github-pages-deploy-action@v4.6.8
+        uses: JamesIves/github-pages-deploy-action@v4.8.0
         with:
           folder: target/site/apidocs
           branch: gh-pages
