@@ -2,6 +2,7 @@
   * **Tan Siewert**
     * server: add userData property to rebuild request
     * storagebox: add new name field to subaccount
+    * error: add new must_be_unassigned code
 
 *Not released yet*
 
