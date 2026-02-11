@@ -1,6 +1,7 @@
 # For next release
   * **Tan Siewert**
     * server: add userData property to rebuild request
+    * storagebox: add new name field to subaccount
 
 *Not released yet*
 
