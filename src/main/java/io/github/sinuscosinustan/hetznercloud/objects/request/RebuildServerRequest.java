@@ -1,6 +1,7 @@
 package io.github.sinuscosinustan.hetznercloud.objects.request;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,4 +13,6 @@ import lombok.Data;
 public class RebuildServerRequest {
 
     private String image;
+    @JsonProperty("user_data")
+    private String userData;
 }

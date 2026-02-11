@@ -1,3 +1,9 @@
+# For next release
+  * **Tan Siewert**
+    * server: add userData property to rebuild request
+
+*Not released yet*
+
 # Patch Release v5.0.1 (2025-10-24)
   * **Tan Siewert**
     * server: add new SCO tariffs
