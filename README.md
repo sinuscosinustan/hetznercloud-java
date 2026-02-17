@@ -1,8 +1,7 @@
 Hetzner Cloud API for Java
 ==========================
 
-![Test Action Status](https://github.com/sinuscosinustan/hetznercloud-java/actions/workflows/test.yml/badge.svg)
-![Build Action Status](https://github.com/sinuscosinustan/hetznercloud-java/actions/workflows/build.yml/badge.svg)
+**THE CODE NOW LIVES ON [CODEBERG](https://codeberg.org/sinuscosinustan/hetznercloud-java)!**
 
 Simple Java client for the Hetzner Cloud API.
 
