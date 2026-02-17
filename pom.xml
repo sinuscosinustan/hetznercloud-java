@@ -6,7 +6,7 @@
 
     <groupId>io.github.sinuscosinustan</groupId>
     <artifactId>hetznercloud-api</artifactId>
-    <version>5.0.1</version>
+    <version>5.0.2</version>
 
     <name>HetznerCloud-API</name>
     <description>Java-client for the Hetzner Cloud</description>

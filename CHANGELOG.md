@@ -1,10 +1,10 @@
-# For next release
+# Patch Release v5.0.2 (2026-02-17)
   * **Tan Siewert**
     * server: add userData property to rebuild request
     * storagebox: add new name field to subaccount
-    * error: add new must_be_unassigned code
+    * error: add new `must_be_unassigned` code
 
-*Not released yet*
+*Released by Tan Siewert <tan@siewert.io>*
 
 # Patch Release v5.0.1 (2025-10-24)
   * **Tan Siewert**
