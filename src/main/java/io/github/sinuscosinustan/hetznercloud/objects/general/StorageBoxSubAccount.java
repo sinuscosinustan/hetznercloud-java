@@ -12,6 +12,7 @@ public class StorageBoxSubAccount {
 
     private String username;
     private String password;
+    private String name;
 
     @JsonProperty("home_path")
     private String homePath;

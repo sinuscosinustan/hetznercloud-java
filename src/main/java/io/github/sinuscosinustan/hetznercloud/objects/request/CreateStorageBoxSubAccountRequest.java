@@ -17,6 +17,7 @@ public class CreateStorageBoxSubAccountRequest {
     private String username;
     @NonNull
     private String password;
+    private String name;
 
     @JsonProperty("home_path")
     private String homePath;

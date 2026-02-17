@@ -20,6 +20,7 @@ public class Error {
         INVALID_INPUT("Error while parsing or processing the input"),
         JSON_ERROR("Invalid JSON input in your request"),
         LOCKED("The item you are trying to access is locked (there is already an action running)"),
+        MUST_BE_UNASSIGNED("The resource must be unassigned before being deleted"),
         NOT_FOUND("Entity not found"),
         RATE_LIMIT_EXCEEDED("Error when sending too many requests"),
         RESOURCE_LIMIT_EXCEEDED("Error when exceeding the maximum quantity of a resource for an account"),
